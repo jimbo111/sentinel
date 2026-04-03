@@ -181,6 +181,57 @@ final class RustPacketEngine {
         )
     }
 
+    // MARK: Threat Intelligence API
+
+    /// Loads a threat feed from hosts-format string data.
+    func loadThreatFeed(data: String, feedName: String) -> Bool {
+        guard let handle = self.handle else { return false }
+        let result = data.withCString { dataPtr in
+            feedName.withCString { namePtr in
+                packet_engine_load_threat_feed(handle, dataPtr, namePtr)
+            }
+        }
+        return result == 0
+    }
+
+    /// Adds a domain to the threat allowlist.
+    func addAllowlistDomain(_ domain: String) -> Bool {
+        guard let handle = self.handle else { return false }
+        return domain.withCString { ptr in
+            packet_engine_add_allowlist(handle, ptr) == 0
+        }
+    }
+
+    /// Removes a domain from the threat allowlist.
+    func removeAllowlistDomain(_ domain: String) -> Bool {
+        guard let handle = self.handle else { return false }
+        return domain.withCString { ptr in
+            packet_engine_remove_allowlist(handle, ptr) == 0
+        }
+    }
+
+    /// Threat detection statistics.
+    struct ThreatStats {
+        var threatsBlocked: UInt64
+        var threatsAllowed: UInt64
+        var feedDomainCount: UInt64
+        var feedsLoaded: UInt64
+    }
+
+    /// Returns a snapshot of the engine's threat detection counters.
+    func getThreatStats() -> ThreatStats {
+        guard let handle = self.handle else {
+            return ThreatStats(threatsBlocked: 0, threatsAllowed: 0, feedDomainCount: 0, feedsLoaded: 0)
+        }
+        let ffi = packet_engine_get_threat_stats(handle)
+        return ThreatStats(
+            threatsBlocked: ffi.threats_blocked,
+            threatsAllowed: ffi.threats_allowed,
+            feedDomainCount: ffi.feed_domain_count,
+            feedsLoaded: ffi.feeds_loaded
+        )
+    }
+
     // MARK: Private helpers
 
     /// Drains the thread-local last-error string set by the C layer.
