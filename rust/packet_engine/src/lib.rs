@@ -10,6 +10,8 @@ pub mod constants;
 pub mod dns_filter;
 pub mod ech_correlator;
 pub mod site_mapper;
+pub mod threat_feed;
+pub mod threat_matcher;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int};
@@ -291,6 +293,163 @@ pub unsafe extern "C" fn packet_engine_get_stats(
             ech_connections_detected: stats.ech_connections,
             ech_resolved_via_dns: stats.ech_resolved_via_dns,
             ech_unresolved: stats.ech_unresolved,
+        }
+    }));
+
+    result.unwrap_or(zero)
+}
+
+// ═══════════════════════════════════════════════════════════
+// Threat Detection FFI
+// ═══════════════════════════════════════════════════════════
+
+/// Threat statistics returned to Swift.
+#[repr(C)]
+pub struct ThreatStatsFFI {
+    pub threats_blocked: u64,
+    pub threats_allowed: u64,
+    pub feed_domain_count: u64,
+    pub feeds_loaded: u64,
+}
+
+/// Load a threat feed from hosts-format data.
+///
+/// `data` and `feed_name` must be valid, non-null UTF-8 C strings.
+///
+/// Returns `0` on success, `-1` on error.
+#[no_mangle]
+pub unsafe extern "C" fn packet_engine_load_threat_feed(
+    engine: *mut PacketEngine,
+    data: *const c_char,
+    feed_name: *const c_char,
+) -> c_int {
+    if engine.is_null() || data.is_null() || feed_name.is_null() {
+        return -1;
+    }
+
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let data_str = match CStr::from_ptr(data).to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in data".into());
+                return -1;
+            }
+        };
+        let name_str = match CStr::from_ptr(feed_name).to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in feed_name".into());
+                return -1;
+            }
+        };
+        let engine = &mut *engine;
+        engine.load_threat_feed(data_str, name_str);
+        0
+    }));
+
+    match result {
+        Ok(code) => code,
+        Err(_) => {
+            set_last_error("Panic during load_threat_feed".into());
+            -1
+        }
+    }
+}
+
+/// Add a domain to the user allowlist.
+///
+/// Returns `0` on success, `-1` on error.
+#[no_mangle]
+pub unsafe extern "C" fn packet_engine_add_allowlist(
+    engine: *mut PacketEngine,
+    domain: *const c_char,
+) -> c_int {
+    if engine.is_null() || domain.is_null() {
+        return -1;
+    }
+
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let domain_str = match CStr::from_ptr(domain).to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in domain".into());
+                return -1;
+            }
+        };
+        let engine = &mut *engine;
+        engine.add_allowlist_domain(domain_str);
+        0
+    }));
+
+    match result {
+        Ok(code) => code,
+        Err(_) => {
+            set_last_error("Panic during add_allowlist".into());
+            -1
+        }
+    }
+}
+
+/// Remove a domain from the user allowlist.
+///
+/// Returns `0` on success, `-1` on error.
+#[no_mangle]
+pub unsafe extern "C" fn packet_engine_remove_allowlist(
+    engine: *mut PacketEngine,
+    domain: *const c_char,
+) -> c_int {
+    if engine.is_null() || domain.is_null() {
+        return -1;
+    }
+
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let domain_str = match CStr::from_ptr(domain).to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_last_error("Invalid UTF-8 in domain".into());
+                return -1;
+            }
+        };
+        let engine = &mut *engine;
+        engine.remove_allowlist_domain(domain_str);
+        0
+    }));
+
+    match result {
+        Ok(code) => code,
+        Err(_) => {
+            set_last_error("Panic during remove_allowlist".into());
+            -1
+        }
+    }
+}
+
+/// Get threat detection statistics.
+///
+/// Returns a zeroed struct if the engine pointer is null.
+#[no_mangle]
+pub unsafe extern "C" fn packet_engine_get_threat_stats(
+    engine: *const PacketEngine,
+) -> ThreatStatsFFI {
+    let zero = ThreatStatsFFI {
+        threats_blocked: 0,
+        threats_allowed: 0,
+        feed_domain_count: 0,
+        feeds_loaded: 0,
+    };
+
+    if engine.is_null() {
+        return zero;
+    }
+
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let engine = &*engine;
+        let stats = engine.threat_stats();
+        ThreatStatsFFI {
+            threats_blocked: stats.threats_blocked,
+            threats_allowed: stats.threats_allowed,
+            feed_domain_count: stats.feed_domain_count as u64,
+            feeds_loaded: stats.feeds_loaded as u64,
         }
     }));
 

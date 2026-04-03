@@ -16,6 +16,7 @@ use crate::domain::{DomainRecord, DetectionSource};
 use crate::storage::DomainStorage;
 use crate::errors::EngineError;
 use crate::constants::*;
+use crate::threat_matcher::{ThreatMatch, ThreatMatcher};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Result of processing a packet.
@@ -50,6 +51,23 @@ pub struct PacketEngine {
     pub ech_downgrade_enabled: bool,
     /// Whether to filter well-known noise domains (Apple, CDN, mDNS, etc.)
     pub noise_filter_enabled: bool,
+    /// Optional threat detection engine; `None` until the first feed is loaded.
+    threat_matcher: Option<ThreatMatcher>,
+    /// Pending threat alerts to flush to SQLite.
+    pending_alerts: Vec<ThreatMatch>,
+}
+
+/// Aggregate statistics for threat detection.
+#[derive(Debug, Default, Clone)]
+pub struct ThreatStats {
+    /// Number of domains blocked by the threat matcher.
+    pub threats_blocked: u64,
+    /// Number of domains that hit a feed but were on the allowlist.
+    pub threats_allowed: u64,
+    /// Total threat domains across all loaded feeds.
+    pub feed_domain_count: usize,
+    /// Number of feeds loaded.
+    pub feeds_loaded: usize,
 }
 
 #[derive(Debug, Default)]
@@ -84,6 +102,8 @@ impl PacketEngine {
             stats: EngineStats::default(),
             ech_downgrade_enabled: false,
             noise_filter_enabled: true,
+            threat_matcher: None,
+            pending_alerts: Vec::new(),
         })
     }
 
@@ -171,6 +191,14 @@ impl PacketEngine {
                     continue;
                 }
                 self.stats.dns_domains_found += 1;
+
+                // Threat check before buffering the domain.
+                if let Some(ref mut matcher) = self.threat_matcher {
+                    if let Some(threat) = matcher.check_domain(&record.domain) {
+                        self.pending_alerts.push(threat);
+                    }
+                }
+
                 self.pending_domains
                     .push(record.with_source(DetectionSource::Dns));
             }
@@ -269,6 +297,14 @@ impl PacketEngine {
                     return;
                 }
                 self.stats.sni_domains_found += 1;
+
+                // Threat check before buffering the domain.
+                if let Some(ref mut matcher) = self.threat_matcher {
+                    if let Some(threat) = matcher.check_domain(&record.domain) {
+                        self.pending_alerts.push(threat);
+                    }
+                }
+
                 self.pending_domains
                     .push(record.with_source(DetectionSource::Sni));
             }
@@ -293,7 +329,8 @@ impl PacketEngine {
         let has_pending = !self.pending_domains.is_empty()
             || !self.pending_domain_ips.is_empty()
             || !self.pending_query_types.is_empty()
-            || !self.pending_bytes.is_empty();
+            || !self.pending_bytes.is_empty()
+            || !self.pending_alerts.is_empty();
 
         if !has_pending {
             return;
@@ -310,13 +347,14 @@ impl PacketEngine {
         }
     }
 
-    /// Force-flush all pending domains, destination IPs, query types, and byte
-    /// counters to SQLite.
+    /// Force-flush all pending domains, destination IPs, query types, byte
+    /// counters, and threat alerts to SQLite.
     pub fn flush(&mut self) {
         if self.pending_domains.is_empty()
             && self.pending_domain_ips.is_empty()
             && self.pending_query_types.is_empty()
             && self.pending_bytes.is_empty()
+            && self.pending_alerts.is_empty()
         {
             return;
         }
@@ -357,6 +395,22 @@ impl PacketEngine {
             }
         }
 
+        if !self.pending_alerts.is_empty() {
+            let alerts: Vec<ThreatMatch> = self.pending_alerts.drain(..).collect();
+            for alert in &alerts {
+                if let Err(e) = self.storage.insert_alert(
+                    &alert.domain,
+                    alert.threat_type.as_str(),
+                    &alert.feed_name,
+                    alert.confidence,
+                    alert.timestamp_ms,
+                ) {
+                    log::error!("Failed to flush threat alert to SQLite: {}", e);
+                    self.stats.flush_errors += 1;
+                }
+            }
+        }
+
         self.last_flush_ms = Self::now_millis();
     }
 
@@ -384,6 +438,67 @@ impl PacketEngine {
         let cutoff_ms = Self::now_millis() - (retention_days * 86_400_000);
         self.storage.cleanup_old_visits(cutoff_ms)
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // Threat detection API
+    // ═══════════════════════════════════════════════════════════
+
+    /// Parse `data` as a hosts-format list and register it as a threat feed.
+    ///
+    /// Initialises the internal [`ThreatMatcher`] on first call.  Subsequent
+    /// calls add additional feeds.
+    ///
+    /// The feed is checked against every domain seen by the engine from this
+    /// point forward; historical domains already in SQLite are not
+    /// retroactively scanned.
+    pub fn load_threat_feed(&mut self, data: &str, feed_name: &str) {
+        let matcher = self.threat_matcher.get_or_insert_with(ThreatMatcher::new);
+        matcher.load_feed(data, feed_name);
+    }
+
+    /// Add `domain` to the in-memory allowlist **and** persist it to SQLite.
+    ///
+    /// Allowlisted domains will not generate alerts even if they appear in a
+    /// loaded threat feed.
+    pub fn add_allowlist_domain(&mut self, domain: &str) {
+        if let Some(ref mut matcher) = self.threat_matcher {
+            matcher.add_allowlist(domain);
+        }
+        let now_ms = Self::now_millis();
+        if let Err(e) = self.storage.insert_allowlist(domain, now_ms) {
+            log::error!("Failed to persist allowlist entry for {}: {}", domain, e);
+        }
+    }
+
+    /// Remove `domain` from the in-memory allowlist **and** from SQLite.
+    pub fn remove_allowlist_domain(&mut self, domain: &str) {
+        if let Some(ref mut matcher) = self.threat_matcher {
+            matcher.remove_allowlist(domain);
+        }
+        if let Err(e) = self.storage.remove_allowlist(domain) {
+            log::error!("Failed to remove allowlist entry for {}: {}", domain, e);
+        }
+    }
+
+    /// Return a snapshot of threat detection statistics.
+    ///
+    /// Returns zeroed stats if no threat feeds have been loaded.
+    #[must_use]
+    pub fn threat_stats(&self) -> ThreatStats {
+        match &self.threat_matcher {
+            Some(m) => ThreatStats {
+                threats_blocked: m.threats_blocked,
+                threats_allowed: m.threats_allowed,
+                feed_domain_count: m.total_threat_domains(),
+                feeds_loaded: m.feeds_loaded(),
+            },
+            None => ThreatStats::default(),
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Private helpers
+    // ═══════════════════════════════════════════════════════════
 
     fn now_millis() -> i64 {
         SystemTime::now()
@@ -737,5 +852,112 @@ mod tests {
         engine.flush();
         assert_eq!(engine.pending_domains.len(), 0);
         assert_eq!(engine.storage.domain_count().unwrap(), 1);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Threat detection integration tests
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn dns_query_to_threat_domain_produces_alert_after_flush() {
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        engine.load_threat_feed("evil-test.com\n", "phishing");
+
+        let packet = build_dns_query_packet("evil-test.com");
+        engine.process_packet(&packet);
+
+        // Alert must be pending before flush.
+        assert_eq!(engine.pending_alerts.len(), 1, "one alert must be pending");
+
+        engine.flush();
+
+        // After flush, pending_alerts is drained.
+        assert_eq!(engine.pending_alerts.len(), 0);
+
+        // Alert must be in SQLite.
+        let count = engine.storage.get_alert_count().unwrap();
+        assert_eq!(count, 1, "one alert must be stored in SQLite after flush");
+    }
+
+    #[test]
+    fn clean_dns_query_produces_no_alert() {
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        engine.load_threat_feed("evil-test.com\n", "phishing");
+
+        let packet = build_dns_query_packet("safe-domain.com");
+        engine.process_packet(&packet);
+        engine.flush();
+
+        let count = engine.storage.get_alert_count().unwrap();
+        assert_eq!(count, 0, "no alert for a clean domain");
+    }
+
+    #[test]
+    fn allowlisted_threat_domain_does_not_produce_alert() {
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        engine.load_threat_feed("evil-test.com\n", "phishing");
+        engine.add_allowlist_domain("evil-test.com");
+
+        let packet = build_dns_query_packet("evil-test.com");
+        engine.process_packet(&packet);
+        engine.flush();
+
+        let count = engine.storage.get_alert_count().unwrap();
+        assert_eq!(count, 0, "allowlisted domain must not produce an alert");
+
+        // threats_allowed must be incremented.
+        let stats = engine.threat_stats();
+        assert_eq!(stats.threats_allowed, 1);
+        assert_eq!(stats.threats_blocked, 0);
+    }
+
+    #[test]
+    fn threat_stats_are_accurate() {
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        engine.load_threat_feed("evil1.com\nevil2.com\n", "malware");
+
+        let p1 = build_dns_query_packet("evil1.com");
+        let p2 = build_dns_query_packet("evil2.com");
+        let p3 = build_dns_query_packet("safe.com");
+        engine.process_packet(&p1);
+        engine.process_packet(&p2);
+        engine.process_packet(&p3);
+        engine.flush();
+
+        let stats = engine.threat_stats();
+        assert_eq!(stats.threats_blocked, 2);
+        assert_eq!(stats.threats_allowed, 0);
+        assert_eq!(stats.feed_domain_count, 2);
+        assert_eq!(stats.feeds_loaded, 1);
+    }
+
+    #[test]
+    fn remove_allowlist_re_enables_alert() {
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        engine.load_threat_feed("evil-test.com\n", "phishing");
+        engine.add_allowlist_domain("evil-test.com");
+
+        // First pass — allowlisted, no alert.
+        engine.process_packet(&build_dns_query_packet("evil-test.com"));
+        engine.flush();
+        assert_eq!(engine.storage.get_alert_count().unwrap(), 0);
+
+        // Remove from allowlist.
+        engine.remove_allowlist_domain("evil-test.com");
+
+        // Second pass — should now produce an alert.
+        engine.process_packet(&build_dns_query_packet("evil-test.com"));
+        engine.flush();
+        assert_eq!(engine.storage.get_alert_count().unwrap(), 1);
+    }
+
+    #[test]
+    fn no_threat_matcher_means_no_alerts() {
+        // Engine with no feeds loaded must not panic and produce zero alerts.
+        let mut engine = PacketEngine::new(":memory:").unwrap();
+        let packet = build_dns_query_packet("anything.com");
+        engine.process_packet(&packet);
+        engine.flush();
+        assert_eq!(engine.storage.get_alert_count().unwrap(), 0);
     }
 }

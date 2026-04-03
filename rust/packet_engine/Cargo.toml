@@ -10,6 +10,7 @@ crate-type = ["staticlib"]
 rusqlite = { version = "0.31", features = ["bundled"] }
 log = "0.4"
 thiserror = "1.0"
+fastbloom-rs = "0.5"
 
 [dev-dependencies]
 tempfile = "3"

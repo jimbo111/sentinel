@@ -216,7 +216,27 @@ impl DomainStorage {
                 query_count     INTEGER NOT NULL DEFAULT 1,
                 UNIQUE(domain, query_type)
             );
-            CREATE INDEX IF NOT EXISTS idx_dns_query_types_domain ON dns_query_types(domain);",
+            CREATE INDEX IF NOT EXISTS idx_dns_query_types_domain ON dns_query_types(domain);
+
+            CREATE TABLE IF NOT EXISTS sentinel_alerts (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                domain       TEXT    NOT NULL,
+                threat_type  TEXT    NOT NULL,
+                feed_name    TEXT    NOT NULL,
+                confidence   REAL    NOT NULL,
+                timestamp_ms INTEGER NOT NULL,
+                dismissed    INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_timestamp
+                ON sentinel_alerts(timestamp_ms);
+            CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_domain
+                ON sentinel_alerts(domain);
+
+            CREATE TABLE IF NOT EXISTS sentinel_allowlist (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                domain   TEXT    NOT NULL UNIQUE,
+                added_ms INTEGER NOT NULL
+            );",
         )?;
 
         Ok(Self { conn })
@@ -443,6 +463,197 @@ impl DomainStorage {
 
         Ok(rows_deleted)
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // Sentinel alert methods
+    // ═══════════════════════════════════════════════════════════
+
+    /// Insert a new threat alert into `sentinel_alerts`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the INSERT fails.
+    pub fn insert_alert(
+        &self,
+        domain: &str,
+        threat_type: &str,
+        feed_name: &str,
+        confidence: f32,
+        timestamp_ms: i64,
+    ) -> Result<(), EngineError> {
+        self.conn
+            .execute(
+                "INSERT INTO sentinel_alerts
+                     (domain, threat_type, feed_name, confidence, timestamp_ms)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![domain, threat_type, feed_name, confidence as f64, timestamp_ms],
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Retrieve the most recent `limit` alerts ordered by `timestamp_ms` DESC.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the query fails.
+    pub fn get_alerts(&self, limit: usize) -> Result<Vec<AlertRecord>, EngineError> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT id, domain, threat_type, feed_name, confidence, timestamp_ms, dismissed
+                 FROM sentinel_alerts
+                 ORDER BY timestamp_ms DESC
+                 LIMIT ?1",
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+
+        let rows = stmt
+            .query_map(params![limit as i64], map_alert_row)
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(rows)
+    }
+
+    /// Count all rows in `sentinel_alerts`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the query fails.
+    pub fn get_alert_count(&self) -> Result<i64, EngineError> {
+        self.conn
+            .query_row("SELECT COUNT(*) FROM sentinel_alerts", [], |row| {
+                row.get(0)
+            })
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))
+    }
+
+    /// Retrieve all alerts with `timestamp_ms >= since_ms`, ordered by
+    /// `timestamp_ms` ASC.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the query fails.
+    pub fn get_alerts_since(&self, since_ms: i64) -> Result<Vec<AlertRecord>, EngineError> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT id, domain, threat_type, feed_name, confidence, timestamp_ms, dismissed
+                 FROM sentinel_alerts
+                 WHERE timestamp_ms >= ?1
+                 ORDER BY timestamp_ms ASC",
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+
+        let rows = stmt
+            .query_map(params![since_ms], map_alert_row)
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(rows)
+    }
+
+    /// Mark an alert row as dismissed (`dismissed = 1`).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the UPDATE fails.
+    pub fn dismiss_alert(&self, alert_id: i64) -> Result<(), EngineError> {
+        self.conn
+            .execute(
+                "UPDATE sentinel_alerts SET dismissed = 1 WHERE id = ?1",
+                params![alert_id],
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+        Ok(())
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Sentinel allowlist methods
+    // ═══════════════════════════════════════════════════════════
+
+    /// Insert `domain` into `sentinel_allowlist` at `timestamp_ms`.
+    ///
+    /// Ignores a conflict if the domain is already present (`INSERT OR IGNORE`).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the INSERT fails.
+    pub fn insert_allowlist(&self, domain: &str, timestamp_ms: i64) -> Result<(), EngineError> {
+        self.conn
+            .execute(
+                "INSERT OR IGNORE INTO sentinel_allowlist (domain, added_ms)
+                 VALUES (?1, ?2)",
+                params![domain, timestamp_ms],
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Remove `domain` from `sentinel_allowlist`.
+    ///
+    /// No-op if the domain is not present.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the DELETE fails.
+    pub fn remove_allowlist(&self, domain: &str) -> Result<(), EngineError> {
+        self.conn
+            .execute(
+                "DELETE FROM sentinel_allowlist WHERE domain = ?1",
+                params![domain],
+            )
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Return all domains currently in `sentinel_allowlist`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::DatabaseWrite`] if the query fails.
+    pub fn get_allowlist(&self) -> Result<Vec<String>, EngineError> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT domain FROM sentinel_allowlist ORDER BY added_ms ASC")
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?;
+
+        let rows = stmt
+            .query_map([], |row| row.get(0))
+            .map_err(|e| EngineError::DatabaseWrite(e.to_string()))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(rows)
+    }
+}
+
+/// A single row from `sentinel_alerts`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AlertRecord {
+    pub id: i64,
+    pub domain: String,
+    pub threat_type: String,
+    pub feed_name: String,
+    pub confidence: f32,
+    pub timestamp_ms: i64,
+    pub dismissed: bool,
+}
+
+/// Map a rusqlite `Row` to an [`AlertRecord`].
+fn map_alert_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<AlertRecord> {
+    Ok(AlertRecord {
+        id: row.get(0)?,
+        domain: row.get(1)?,
+        threat_type: row.get(2)?,
+        feed_name: row.get(3)?,
+        confidence: row.get::<_, f64>(4)? as f32,
+        timestamp_ms: row.get(5)?,
+        dismissed: row.get::<_, i64>(6)? != 0,
+    })
 }
 
 #[cfg(test)]
@@ -1092,5 +1303,133 @@ mod tests {
             Some("1.3"),
             "tls_version must not be overwritten by a NULL on upsert"
         );
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // sentinel_alerts tests
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn insert_and_retrieve_alert() {
+        let storage = in_memory_storage();
+
+        storage
+            .insert_alert("evil.com", "phishing", "phishing-feed", 1.0, 1_000)
+            .expect("insert_alert should succeed");
+
+        let alerts = storage.get_alerts(10).expect("get_alerts should succeed");
+        assert_eq!(alerts.len(), 1);
+
+        let alert = &alerts[0];
+        assert_eq!(alert.domain, "evil.com");
+        assert_eq!(alert.threat_type, "phishing");
+        assert_eq!(alert.feed_name, "phishing-feed");
+        assert!((alert.confidence - 1.0).abs() < 1e-4);
+        assert_eq!(alert.timestamp_ms, 1_000);
+        assert!(!alert.dismissed, "new alert must not be dismissed");
+    }
+
+    #[test]
+    fn get_alert_count_matches_inserts() {
+        let storage = in_memory_storage();
+
+        storage.insert_alert("a.com", "malware", "feed", 0.9, 1_000).unwrap();
+        storage.insert_alert("b.com", "phishing", "feed", 1.0, 2_000).unwrap();
+        storage.insert_alert("c.com", "c2", "feed", 0.8, 3_000).unwrap();
+
+        let count = storage.get_alert_count().expect("get_alert_count should succeed");
+        assert_eq!(count, 3);
+    }
+
+    #[test]
+    fn get_alerts_since_filters_correctly() {
+        let storage = in_memory_storage();
+
+        storage.insert_alert("old.com", "malware", "feed", 1.0, 500).unwrap();
+        storage.insert_alert("recent.com", "phishing", "feed", 1.0, 2_000).unwrap();
+        storage.insert_alert("newer.com", "c2", "feed", 0.8, 5_000).unwrap();
+
+        let alerts = storage
+            .get_alerts_since(1_000)
+            .expect("get_alerts_since should succeed");
+
+        assert_eq!(alerts.len(), 2, "only alerts at or after since_ms=1_000 must be returned");
+        assert_eq!(alerts[0].domain, "recent.com");
+        assert_eq!(alerts[1].domain, "newer.com");
+    }
+
+    #[test]
+    fn dismiss_alert_sets_dismissed_flag() {
+        let storage = in_memory_storage();
+
+        storage.insert_alert("evil.com", "phishing", "feed", 1.0, 1_000).unwrap();
+        let alerts = storage.get_alerts(10).unwrap();
+        let id = alerts[0].id;
+
+        storage.dismiss_alert(id).expect("dismiss_alert should succeed");
+
+        let alerts_after = storage.get_alerts(10).unwrap();
+        assert!(alerts_after[0].dismissed, "dismissed flag must be true after dismiss");
+    }
+
+    #[test]
+    fn get_alerts_limit_is_respected() {
+        let storage = in_memory_storage();
+
+        for i in 0..10i64 {
+            storage.insert_alert("evil.com", "phishing", "feed", 1.0, i * 100).unwrap();
+        }
+
+        let alerts = storage.get_alerts(3).expect("get_alerts should succeed");
+        assert_eq!(alerts.len(), 3, "limit must be enforced");
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // sentinel_allowlist tests
+    // ═══════════════════════════════════════════════════════════
+
+    #[test]
+    fn allowlist_insert_and_get() {
+        let storage = in_memory_storage();
+
+        storage.insert_allowlist("safe.com", 1_000).expect("insert_allowlist should succeed");
+        storage.insert_allowlist("also-safe.net", 2_000).expect("second insert should succeed");
+
+        let list = storage.get_allowlist().expect("get_allowlist should succeed");
+        assert_eq!(list.len(), 2);
+        assert!(list.contains(&"safe.com".to_owned()));
+        assert!(list.contains(&"also-safe.net".to_owned()));
+    }
+
+    #[test]
+    fn allowlist_remove_works() {
+        let storage = in_memory_storage();
+
+        storage.insert_allowlist("safe.com", 1_000).unwrap();
+        storage.remove_allowlist("safe.com").expect("remove_allowlist should succeed");
+
+        let list = storage.get_allowlist().expect("get_allowlist should succeed");
+        assert!(list.is_empty(), "allowlist must be empty after remove");
+    }
+
+    #[test]
+    fn allowlist_duplicate_insert_is_idempotent() {
+        let storage = in_memory_storage();
+
+        storage.insert_allowlist("safe.com", 1_000).unwrap();
+        // INSERT OR IGNORE must not fail or duplicate the row.
+        storage.insert_allowlist("safe.com", 2_000).expect("duplicate insert must not fail");
+
+        let list = storage.get_allowlist().expect("get_allowlist should succeed");
+        assert_eq!(list.len(), 1, "duplicate insert must not create a second row");
+    }
+
+    #[test]
+    fn allowlist_remove_nonexistent_is_noop() {
+        let storage = in_memory_storage();
+        // Removing a domain that was never inserted must not fail.
+        storage
+            .remove_allowlist("never-added.com")
+            .expect("remove of nonexistent domain must not fail");
     }
 }
