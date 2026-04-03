@@ -60,6 +60,17 @@ struct ringApp: App {
         // Start shopping deal notifications
         ShoppingNotificationService.shared.startListening()
 
+        // Load cached threat feeds for instant protection, then refresh from network
+        Task.detached(priority: .utility) {
+            let _ = await ThreatFeedService.shared.loadCachedFeeds()
+            let _ = await ThreatFeedService.shared.refreshFeeds()
+        }
+
+        // Request notification permission for threat alerts
+        Task.detached(priority: .utility) {
+            await ThreatAlertService.shared.requestPermission()
+        }
+
         // Sync telemetry on launch
         await syncTelemetryIfReady()
     }
