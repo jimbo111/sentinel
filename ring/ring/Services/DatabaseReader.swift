@@ -564,6 +564,190 @@ final class DatabaseReader {
         }
     }
 
+    // MARK: - Threat Queries
+
+    /// Most recent threat alerts, ordered by timestamp descending.
+    func fetchRecentAlerts(limit: Int = 50) -> [ThreatRecord] {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return [] }
+
+            let sql = """
+                SELECT id, domain, threat_type, feed_name, confidence, timestamp, dismissed
+                FROM sentinel_alerts
+                ORDER BY timestamp DESC
+                LIMIT ?
+                """
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            defer { sqlite3_finalize(stmt) }
+
+            sqlite3_bind_int(stmt, 1, Int32(limit))
+
+            var records: [ThreatRecord] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                records.append(ThreatRecord(
+                    id: sqlite3_column_int64(stmt, 0),
+                    domain: columnText(stmt, index: 1),
+                    threatType: columnText(stmt, index: 2),
+                    feedName: columnText(stmt, index: 3),
+                    confidence: sqlite3_column_double(stmt, 4),
+                    timestampMs: sqlite3_column_int64(stmt, 5),
+                    dismissed: sqlite3_column_int(stmt, 6) != 0
+                ))
+            }
+            return records
+        }
+    }
+
+    /// Total number of threat alerts.
+    func fetchAlertCount() -> Int {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return 0 }
+            return scalarInt(db: db, sql: "SELECT COUNT(*) FROM sentinel_alerts")
+        }
+    }
+
+    /// Number of threat alerts since a given date.
+    func fetchAlertCountSince(_ date: Date) -> Int {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return 0 }
+            let ms = Int64(date.timeIntervalSince1970 * 1000)
+            return scalarInt(
+                db: db,
+                sql: "SELECT COUNT(*) FROM sentinel_alerts WHERE timestamp >= ?",
+                bind: { stmt in sqlite3_bind_int64(stmt, 1, ms) }
+            )
+        }
+    }
+
+    /// Threat counts grouped by type.
+    func fetchThreatsByType() -> [(type: String, count: Int)] {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return [] }
+
+            let sql = """
+                SELECT threat_type, COUNT(*) as cnt
+                FROM sentinel_alerts
+                GROUP BY threat_type
+                ORDER BY cnt DESC
+                """
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            defer { sqlite3_finalize(stmt) }
+
+            var results: [(type: String, count: Int)] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                results.append((
+                    type: columnText(stmt, index: 0),
+                    count: Int(sqlite3_column_int(stmt, 1))
+                ))
+            }
+            return results
+        }
+    }
+
+    /// Mark an alert as dismissed.
+    func dismissAlert(id: Int64) {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return }
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(
+                db, "UPDATE sentinel_alerts SET dismissed = 1 WHERE id = ?", -1, &stmt, nil
+            ) == SQLITE_OK else { return }
+            defer { sqlite3_finalize(stmt) }
+
+            sqlite3_bind_int64(stmt, 1, id)
+            sqlite3_step(stmt)
+        }
+    }
+
+    // MARK: - Allowlist Queries
+
+    /// All domains on the threat allowlist.
+    func fetchAllowlist() -> [String] {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return [] }
+
+            let sql = "SELECT domain FROM sentinel_allowlist ORDER BY domain ASC"
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            defer { sqlite3_finalize(stmt) }
+
+            var domains: [String] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                domains.append(columnText(stmt, index: 0))
+            }
+            return domains
+        }
+    }
+
+    /// Add a domain to the threat allowlist.
+    func addToAllowlist(domain: String) {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return }
+
+            let sql = "INSERT OR IGNORE INTO sentinel_allowlist (domain) VALUES (?)"
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
+            defer { sqlite3_finalize(stmt) }
+
+            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+            domain.withCString { cStr in
+                sqlite3_bind_text(stmt, 1, cStr, -1, transient)
+            }
+            sqlite3_step(stmt)
+        }
+    }
+
+    /// Remove a domain from the threat allowlist.
+    func removeFromAllowlist(domain: String) {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return }
+
+            let sql = "DELETE FROM sentinel_allowlist WHERE domain = ?"
+
+            var stmt: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
+            defer { sqlite3_finalize(stmt) }
+
+            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+            domain.withCString { cStr in
+                sqlite3_bind_text(stmt, 1, cStr, -1, transient)
+            }
+            sqlite3_step(stmt)
+        }
+    }
+
+    /// Check if a domain is on the allowlist.
+    func isAllowlisted(domain: String) -> Bool {
+        queue.sync {
+            ensureOpen()
+            guard let db = db else { return false }
+
+            let sql = "SELECT COUNT(*) FROM sentinel_allowlist WHERE domain = ?"
+            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+            let count = scalarInt(db: db, sql: sql, bind: { stmt in
+                domain.withCString { cStr in
+                    sqlite3_bind_text(stmt, 1, cStr, -1, transient)
+                }
+            })
+            return count > 0
+        }
+    }
+
     // MARK: - Helpers
 
     /// Runs a query that returns `DomainRecord` rows.
