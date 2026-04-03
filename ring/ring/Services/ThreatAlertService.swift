@@ -10,7 +10,7 @@ import os.log
 final class ThreatAlertService: NSObject {
     static let shared = ThreatAlertService()
 
-    private let log = OSLog(subsystem: "com.jimmykim.ring", category: "ThreatAlertService")
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel", category: "ThreatAlertService")
 
     /// Minimum interval between notifications (seconds).
     private let rateLimitInterval: TimeInterval = 30

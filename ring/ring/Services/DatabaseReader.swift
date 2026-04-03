@@ -37,8 +37,8 @@ final class DatabaseReader {
 
     private var db: OpaquePointer?
     private var schemaValid = false
-    private let queue = DispatchQueue(label: "com.jimmykim.ring.dbreader", qos: .userInitiated)
-    private let log = OSLog(subsystem: "com.jimmykim.ring", category: "DatabaseReader")
+    private let queue = DispatchQueue(label: "com.jimmykim.sentinel.dbreader", qos: .userInitiated)
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel", category: "DatabaseReader")
 
     // MARK: - Init / Deinit
 

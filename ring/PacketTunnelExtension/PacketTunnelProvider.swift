@@ -2,13 +2,13 @@ import NetworkExtension
 import os.log
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
-    private let log = OSLog(subsystem: "com.jimmykim.ring.tunnel", category: "PacketTunnel")
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel.tunnel", category: "PacketTunnel")
 
     /// Single serial queue that protects ALL mutable state in this class.
-    private let queue = DispatchQueue(label: "com.jimmykim.ring.tunnel.state")
+    private let queue = DispatchQueue(label: "com.jimmykim.sentinel.tunnel.state")
 
     /// Serializes ALL calls into the RustPacketEngine instance.
-    private let engineQueue = DispatchQueue(label: "com.jimmykim.ring.tunnel.engine")
+    private let engineQueue = DispatchQueue(label: "com.jimmykim.sentinel.tunnel.engine")
 
     // -- Protected by `queue` --
     private var rustEngine: RustPacketEngine?
@@ -451,7 +451,7 @@ class DNSForwarder: NSObject {
         self.packetFlow = packetFlow
         self.log = log
         self.debugLog = debugLog
-        self.queue = DispatchQueue(label: "com.jimmykim.ring.dnsforwarder")
+        self.queue = DispatchQueue(label: "com.jimmykim.sentinel.dnsforwarder")
         super.init()
         os_log("DNS forwarder initialized (NWUDPSession)", log: log, type: .default)
     }

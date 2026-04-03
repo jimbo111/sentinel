@@ -69,7 +69,7 @@ final class ConsentService {
         await sendConsent(dnsTelemetry: dns, usageAnalytics: analytics, crashReports: crashes)
     }
 
-    private static let keychainService = "com.jimmykim.ring"
+    private static let keychainService = "com.jimmykim.sentinel"
     private static let keychainAccount = "device_id"
 
     func getOrCreateDeviceId() -> String {
@@ -98,7 +98,7 @@ final class ConsentService {
             kSecAttrService as String: Self.keychainService,
             kSecAttrAccount as String: Self.keychainAccount,
             kSecReturnData as String: true,
-            kSecAttrAccessGroup as String: "9JYD5XU49X.group.com.jimmykim.ring"
+            kSecAttrAccessGroup as String: "9JYD5XU49X.group.com.jimmykim.sentinel"
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -114,7 +114,7 @@ final class ConsentService {
             kSecAttrAccount as String: Self.keychainAccount,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
-            kSecAttrAccessGroup as String: "9JYD5XU49X.group.com.jimmykim.ring"
+            kSecAttrAccessGroup as String: "9JYD5XU49X.group.com.jimmykim.sentinel"
         ]
         let status = SecItemAdd(query as CFDictionary, nil)
         if status == errSecDuplicateItem {

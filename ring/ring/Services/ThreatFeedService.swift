@@ -7,7 +7,7 @@ import os.log
 actor ThreatFeedService {
     static let shared = ThreatFeedService()
 
-    private let log = OSLog(subsystem: "com.jimmykim.ring", category: "ThreatFeedService")
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel", category: "ThreatFeedService")
 
     struct FeedConfig {
         let name: String

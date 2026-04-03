@@ -8,9 +8,9 @@ import os.log
 final class LiveActivityManager {
     static let shared = LiveActivityManager()
 
-    private var activity: Activity<RingActivityAttributes>?
+    private var activity: Activity<SentinelActivityAttributes>?
     private var sessionStartDate: Date?
-    private let log = OSLog(subsystem: "com.jimmykim.ring", category: "LiveActivity")
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel", category: "LiveActivity")
 
     private init() {}
 
@@ -31,8 +31,8 @@ final class LiveActivityManager {
         let now = Date()
         sessionStartDate = now
 
-        let attributes = RingActivityAttributes()
-        let initialState = RingActivityAttributes.ContentState(
+        let attributes = SentinelActivityAttributes()
+        let initialState = SentinelActivityAttributes.ContentState(
             isConnected: true,
             domainsToday: 0,
             totalVisits: 0,
@@ -59,7 +59,7 @@ final class LiveActivityManager {
         guard let activity else { return }
         guard let startDate = sessionStartDate else { return }
 
-        let state = RingActivityAttributes.ContentState(
+        let state = SentinelActivityAttributes.ContentState(
             isConnected: true,
             domainsToday: domainsToday,
             totalVisits: totalVisits,
@@ -76,7 +76,7 @@ final class LiveActivityManager {
     func stopActivity() {
         guard let activity else { return }
 
-        let finalState = RingActivityAttributes.ContentState(
+        let finalState = SentinelActivityAttributes.ContentState(
             isConnected: false,
             domainsToday: 0,
             totalVisits: 0,

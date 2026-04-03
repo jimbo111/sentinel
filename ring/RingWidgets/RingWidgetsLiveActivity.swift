@@ -5,33 +5,33 @@ import WidgetKit
 // MARK: - Brand Colors
 // Defined here because the widget extension cannot import the main app's Theme.swift.
 
-private let ringAccentColor: Color = Color(red: 140/255, green: 100/255, blue: 200/255)
+private let sentinelAccentColor: Color = Color(red: 140/255, green: 100/255, blue: 200/255)
 private let connectedColor: Color = Color(red: 120/255, green: 210/255, blue: 90/255)
 private let disconnectedColor: Color = Color.gray
 
 // MARK: - Live Activity Widget
 
-struct RingWidgetsLiveActivity: Widget {
+struct SentinelWidgetsLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: RingActivityAttributes.self) { context in
-            RingLockScreenBanner(state: context.state)
+        ActivityConfiguration(for: SentinelActivityAttributes.self) { context in
+            SentinelLockScreenBanner(state: context.state)
         } dynamicIsland: { context in
             DynamicIsland {
                 // Leading: brand icon + connection label
                 DynamicIslandExpandedRegion(.leading) {
-                    RingExpandedLeading(state: context.state)
+                    SentinelExpandedLeading(state: context.state)
                 }
                 // Trailing: live session timer
                 DynamicIslandExpandedRegion(.trailing) {
-                    RingExpandedTrailing(state: context.state)
+                    SentinelExpandedTrailing(state: context.state)
                 }
                 // Center: prominent domain count
                 DynamicIslandExpandedRegion(.center) {
-                    RingExpandedCenter(state: context.state)
+                    SentinelExpandedCenter(state: context.state)
                 }
                 // Bottom: last visited domain
                 DynamicIslandExpandedRegion(.bottom) {
-                    RingExpandedBottom(state: context.state)
+                    SentinelExpandedBottom(state: context.state)
                 }
             } compactLeading: {
                 // Small shield icon — more visible than a dot
@@ -45,10 +45,10 @@ struct RingWidgetsLiveActivity: Widget {
                 HStack(spacing: 1) {
                     Text("\(context.state.domainsToday)")
                         .font(.caption2.monospacedDigit().weight(.bold))
-                        .foregroundColor(ringAccentColor)
+                        .foregroundColor(sentinelAccentColor)
                     Text("d")
                         .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(ringAccentColor.opacity(0.7))
+                        .foregroundColor(sentinelAccentColor.opacity(0.7))
                 }
             } minimal: {
                 // Just the shield, tinted by status
@@ -64,8 +64,8 @@ struct RingWidgetsLiveActivity: Widget {
 
 // MARK: - Dynamic Island — Expanded Leading
 
-private struct RingExpandedLeading: View {
-    let state: RingActivityAttributes.ContentState
+private struct SentinelExpandedLeading: View {
+    let state: SentinelActivityAttributes.ContentState
 
     var body: some View {
         HStack(spacing: 5) {
@@ -73,7 +73,7 @@ private struct RingExpandedLeading: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(state.isConnected ? connectedColor : disconnectedColor)
             VStack(alignment: .leading, spacing: 0) {
-                Text("Ring")
+                Text("Sentinel")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.primary)
                 Text(state.isConnected ? "Protected" : "Off")
@@ -87,8 +87,8 @@ private struct RingExpandedLeading: View {
 
 // MARK: - Dynamic Island — Expanded Trailing
 
-private struct RingExpandedTrailing: View {
-    let state: RingActivityAttributes.ContentState
+private struct SentinelExpandedTrailing: View {
+    let state: SentinelActivityAttributes.ContentState
 
     var body: some View {
         if state.isConnected {
@@ -107,14 +107,14 @@ private struct RingExpandedTrailing: View {
 
 // MARK: - Dynamic Island — Expanded Center
 
-private struct RingExpandedCenter: View {
-    let state: RingActivityAttributes.ContentState
+private struct SentinelExpandedCenter: View {
+    let state: SentinelActivityAttributes.ContentState
 
     var body: some View {
         VStack(spacing: 0) {
             Text("\(state.domainsToday)")
                 .font(.system(size: 22, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundColor(ringAccentColor)
+                .foregroundColor(sentinelAccentColor)
             Text("domains")
                 .font(.system(size: 9, weight: .regular))
                 .foregroundColor(.secondary)
@@ -124,14 +124,14 @@ private struct RingExpandedCenter: View {
 
 // MARK: - Dynamic Island — Expanded Bottom
 
-private struct RingExpandedBottom: View {
-    let state: RingActivityAttributes.ContentState
+private struct SentinelExpandedBottom: View {
+    let state: SentinelActivityAttributes.ContentState
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(ringAccentColor.opacity(0.7))
+                .foregroundColor(sentinelAccentColor.opacity(0.7))
             if state.lastDomain.isEmpty {
                 Text("No recent activity")
                     .font(.system(size: 11))
@@ -152,8 +152,8 @@ private struct RingExpandedBottom: View {
 
 // MARK: - Lock Screen Banner
 
-private struct RingLockScreenBanner: View {
-    let state: RingActivityAttributes.ContentState
+private struct SentinelLockScreenBanner: View {
+    let state: SentinelActivityAttributes.ContentState
 
     var body: some View {
         VStack(spacing: 14) {
@@ -163,7 +163,7 @@ private struct RingLockScreenBanner: View {
                     Image(systemName: state.isConnected ? "shield.checkered" : "shield.slash")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(state.isConnected ? connectedColor : disconnectedColor)
-                    Text("Ring")
+                    Text("Sentinel")
                         .font(.system(size: 15, weight: .bold))
                 }
 
@@ -192,7 +192,7 @@ private struct RingLockScreenBanner: View {
             HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text("\(state.domainsToday)")
                     .font(.system(size: 40, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundColor(ringAccentColor)
+                    .foregroundColor(sentinelAccentColor)
                 Text("domains")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
@@ -226,17 +226,17 @@ private struct RingLockScreenBanner: View {
 
 // MARK: - Previews
 
-#Preview("Lock Screen — Connected", as: .content, using: RingActivityAttributes()) {
-    RingWidgetsLiveActivity()
+#Preview("Lock Screen — Connected", as: .content, using: SentinelActivityAttributes()) {
+    SentinelWidgetsLiveActivity()
 } contentStates: {
-    RingActivityAttributes.ContentState(
+    SentinelActivityAttributes.ContentState(
         isConnected: true,
         domainsToday: 84,
         totalVisits: 312,
         lastDomain: "youtube.com",
         sessionStartDate: Date().addingTimeInterval(-2743)
     )
-    RingActivityAttributes.ContentState(
+    SentinelActivityAttributes.ContentState(
         isConnected: false,
         domainsToday: 31,
         totalVisits: 88,
@@ -245,10 +245,10 @@ private struct RingLockScreenBanner: View {
     )
 }
 
-#Preview("Dynamic Island — Expanded", as: .dynamicIsland(.expanded), using: RingActivityAttributes()) {
-    RingWidgetsLiveActivity()
+#Preview("Dynamic Island — Expanded", as: .dynamicIsland(.expanded), using: SentinelActivityAttributes()) {
+    SentinelWidgetsLiveActivity()
 } contentStates: {
-    RingActivityAttributes.ContentState(
+    SentinelActivityAttributes.ContentState(
         isConnected: true,
         domainsToday: 84,
         totalVisits: 312,
@@ -257,10 +257,10 @@ private struct RingLockScreenBanner: View {
     )
 }
 
-#Preview("Dynamic Island — Compact", as: .dynamicIsland(.compact), using: RingActivityAttributes()) {
-    RingWidgetsLiveActivity()
+#Preview("Dynamic Island — Compact", as: .dynamicIsland(.compact), using: SentinelActivityAttributes()) {
+    SentinelWidgetsLiveActivity()
 } contentStates: {
-    RingActivityAttributes.ContentState(
+    SentinelActivityAttributes.ContentState(
         isConnected: true,
         domainsToday: 84,
         totalVisits: 312,
@@ -269,10 +269,10 @@ private struct RingLockScreenBanner: View {
     )
 }
 
-#Preview("Dynamic Island — Minimal", as: .dynamicIsland(.minimal), using: RingActivityAttributes()) {
-    RingWidgetsLiveActivity()
+#Preview("Dynamic Island — Minimal", as: .dynamicIsland(.minimal), using: SentinelActivityAttributes()) {
+    SentinelWidgetsLiveActivity()
 } contentStates: {
-    RingActivityAttributes.ContentState(
+    SentinelActivityAttributes.ContentState(
         isConnected: true,
         domainsToday: 84,
         totalVisits: 312,

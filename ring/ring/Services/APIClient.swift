@@ -288,11 +288,11 @@ enum APIError: LocalizedError {
 
 /// Thin wrapper around the Security framework for storing small string values.
 ///
-/// All operations are scoped to `kSecAttrService = "com.jimmykim.ring"` to
+/// All operations are scoped to `kSecAttrService = "com.jimmykim.sentinel"` to
 /// prevent collisions with other apps that use the same account key names.
 enum KeychainHelper {
 
-    private static let service = "com.jimmykim.ring"
+    private static let service = "com.jimmykim.sentinel"
 
     /// Saves `value` under `key`, overwriting any existing entry.
     static func save(key: String, value: String) {

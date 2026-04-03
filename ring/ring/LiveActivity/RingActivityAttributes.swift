@@ -1,7 +1,7 @@
 import ActivityKit
 import Foundation
 
-struct RingActivityAttributes: ActivityAttributes {
+struct SentinelActivityAttributes: ActivityAttributes {
     /// Dynamic data that updates during the Live Activity lifecycle.
     struct ContentState: Codable, Hashable {
         var isConnected: Bool

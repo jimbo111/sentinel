@@ -61,7 +61,7 @@ final class VPNManager: ObservableObject {
 
     private var manager: NETunnelProviderManager?
     private var statusObserver: Any?
-    private let log = OSLog(subsystem: "com.jimmykim.ring", category: "VPNManager")
+    private let log = OSLog(subsystem: "com.jimmykim.sentinel", category: "VPNManager")
 
     // MARK: Init
 
@@ -94,11 +94,11 @@ final class VPNManager: ObservableObject {
     func createNewManager() async throws {
         let newManager = NETunnelProviderManager()
         let proto = NETunnelProviderProtocol()
-        proto.providerBundleIdentifier = "jimmy.ring.tunnel"
+        proto.providerBundleIdentifier = "jimmy.sentinel.tunnel"
         proto.serverAddress = "localhost"
         proto.disconnectOnSleep = false  // Keep tunnel alive during sleep
         newManager.protocolConfiguration = proto
-        newManager.localizedDescription = "Ring"
+        newManager.localizedDescription = "Sentinel"
         newManager.isEnabled = true
 
         // On-demand: auto-reconnect after reboot, kill, or network change

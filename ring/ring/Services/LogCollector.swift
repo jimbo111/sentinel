@@ -8,7 +8,7 @@ final class LogCollector {
     static let shared = LogCollector()
 
     private let fileURL: URL
-    private let queue = DispatchQueue(label: "com.jimmykim.ring.logcollector")
+    private let queue = DispatchQueue(label: "com.jimmykim.sentinel.logcollector")
     private static let maxFileSize = 512 * 1024 // 512 KB
 
     private init() {

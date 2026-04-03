@@ -1,10 +1,10 @@
 import Foundation
 import os.log
 
-private let appGroupLog = OSLog(subsystem: "com.jimmykim.ring", category: "AppGroupConfig")
+private let appGroupLog = OSLog(subsystem: "com.jimmykim.sentinel", category: "AppGroupConfig")
 
 enum AppGroupConfig {
-    static let groupIdentifier = "group.com.jimmykim.ring"
+    static let groupIdentifier = "group.com.jimmykim.sentinel"
 
     static var containerURL: URL {
         guard let url = FileManager.default.containerURL(
@@ -38,6 +38,6 @@ enum AppGroupConfig {
         return defaults
     }
 
-    static let newDomainsNotification = "com.jimmykim.ring.newdomains"
-    static let threatAlertNotification = "com.jimmykim.ring.threatalert"
+    static let newDomainsNotification = "com.jimmykim.sentinel.newdomains"
+    static let threatAlertNotification = "com.jimmykim.sentinel.threatalert"
 }

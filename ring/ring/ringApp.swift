@@ -2,7 +2,7 @@ import SwiftUI
 import NetworkExtension
 
 @main
-struct ringApp: App {
+struct sentinelApp: App {
     @StateObject private var vpnManager = VPNManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false

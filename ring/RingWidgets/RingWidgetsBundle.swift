@@ -2,7 +2,7 @@ import WidgetKit
 import SwiftUI
 
 @main
-struct RingWidgetsBundle: WidgetBundle {
+struct SentinelWidgetsBundle: WidgetBundle {
     var body: some Widget {
         RingWidgetsLiveActivity()
     }
