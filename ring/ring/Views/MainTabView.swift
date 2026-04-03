@@ -6,9 +6,14 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
+            ThreatDashboardView()
+                .tabItem {
+                    Label("Security", systemImage: "shield.checkered")
+                }
+
             ConnectionView()
                 .tabItem {
-                    Label("Home", systemImage: "shield.checkered")
+                    Label("Home", systemImage: "network")
                 }
 
             DomainListView()
