@@ -39,4 +39,5 @@ enum AppGroupConfig {
     }
 
     static let newDomainsNotification = "com.jimmykim.ring.newdomains"
+    static let threatAlertNotification = "com.jimmykim.ring.threatalert"
 }

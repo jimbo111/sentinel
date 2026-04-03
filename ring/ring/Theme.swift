@@ -13,6 +13,11 @@ enum Theme {
     static let connected = Color(red: 120/255, green: 210/255, blue: 90/255)
     static let transitioning = amber
 
+    // Threat severity colors
+    static let threatRed = Color(red: 220/255, green: 60/255, blue: 60/255)
+    static let threatOrange = Color(red: 235/255, green: 150/255, blue: 50/255)
+    static let threatYellow = Color(red: 230/255, green: 200/255, blue: 60/255)
+
     // Card system (crypto-wallet layout pattern)
     static let cardBackground = Color(.secondarySystemGroupedBackground)
     static let pageBackground = Color(.systemGroupedBackground)
