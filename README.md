@@ -1,81 +1,88 @@
-# Ring
+# Sentinel
 
-A privacy-first iOS app that shows you every domain your device connects to. All traffic analysis runs on-device — nothing leaves your phone.
-
-Ring creates a local VPN tunnel to observe DNS queries, extract domain names, and store them in a local database. No remote servers are involved in the packet inspection pipeline.
+On-device phishing and malware protection for iOS. Sentinel intercepts DNS queries through a local VPN tunnel, checks every domain against curated threat intelligence feeds, and blocks malicious connections instantly — all without sending your browsing data to the cloud.
 
 ## How it works
 
 ```
-iOS apps send traffic  -->  Local VPN tunnel  -->  Rust packet engine  -->  SQLite
-                                                   (DNS parsing)            (on-device)
+iOS app makes DNS query
+  → Local VPN tunnel intercepts it
+  → Rust engine checks domain against bloom filter (400K+ threat domains)
+  → Match? → Sinkhole response (0.0.0.0) sent back, connection blocked
+  → No match? → Query forwarded to real DNS server normally
 
-Internet traffic flows normally. Ring only observes DNS queries.
+All processing happens on-device. Zero browsing data leaves your phone.
 ```
 
-The app consists of three layers:
+The app runs as two processes:
 
-1. **Rust packet engine** — parses raw IP packets to extract domain names from DNS queries. Compiled as a static C library (`libpacket_engine.a`) and linked into the iOS Network Extension.
-2. **iOS Network Extension** — runs as `NEPacketTunnelProvider`, intercepts DNS traffic, passes it through the Rust engine, and forwards it to real DNS servers.
-3. **SwiftUI app** — reads the shared SQLite database and displays domains, stats, and settings.
+1. **Network Extension** — intercepts DNS traffic, runs the Rust threat matching engine, blocks malicious domains with sinkhole responses
+2. **Main app** — displays the security dashboard, manages threat feeds, handles allowlisting
 
 ## Features
 
-- Real-time domain monitoring via DNS query interception
-- ECH (Encrypted Client Hello) downgrade support — strips ECH configs from DNS HTTPS records
-- DNS/IP correlation for passive domain detection
-- Local SQLite storage with visit history
-- Search, sort, and filter domains
-- CSV export
-- Privacy-focused: zero data leaves the device
+- DNS-level threat blocking against 400K+ known phishing, malware, and C2 domains
+- Real-time security dashboard with block counter and threat log
+- Push notifications when threats are blocked
+- Per-domain allowlist for false positive recovery
+- Domain monitoring — see every domain your device connects to
+- ECH (Encrypted Client Hello) downgrade for security visibility
+- Fully on-device — no browsing data transmitted to any server
+
+## Threat Intelligence
+
+| Feed | Coverage | Update Frequency |
+|------|----------|-----------------|
+| HaGeZi Pro | ~402K domains (ads, trackers, malware) | Daily |
+| URLhaus (abuse.ch) | ~20-40K active malware URLs | Daily |
+
+Feeds are downloaded by the app, cached locally, and loaded into the Network Extension on tunnel startup.
 
 ## Project structure
 
 ```
-ring/                          iOS app (Xcode project)
-  ring/                        Main app target (SwiftUI)
-    Views/                      Connection, Domains, Stats, Settings, Onboarding
-    Services/                   VPNManager, DatabaseReader, APIClient, DarwinNotificationListener
-    Models/                     DomainRecord, UserSettings
-  PacketTunnelExtension/        Network Extension target
-    PacketTunnelProvider.swift   NEPacketTunnelProvider + DNS forwarder
-    RustBridge.swift            Swift wrapper around C FFI
-    Bridge/packet_engine.h      Auto-generated C header (cbindgen)
-  Shared/                       Code shared between both targets
-  Frameworks/                   Prebuilt Rust static libraries
+ring/                              iOS app (Xcode project)
+  ring/                            Main app target (SwiftUI)
+    Views/
+      Threats/                     Security dashboard, threat detail, allowlist
+      Connection/                  VPN toggle and status
+      Domains/                     Domain history browser
+      Stats/                       Analytics and charts
+      Settings/                    App configuration
+    Services/
+      ThreatFeedService            Downloads and caches threat feeds
+      ThreatAlertService           Local push notifications for blocks
+      DatabaseReader               SQLite queries (domains, alerts, allowlist)
+      VPNManager                   NEPacketTunnelProvider lifecycle
+    Models/
+      ThreatRecord                 Threat alert data model
+      DomainRecord                 Domain observation data model
+  PacketTunnelExtension/           Network Extension target
+    PacketTunnelProvider           DNS interception + forwarding + blocking
+    RustBridge                     Swift wrapper around Rust C FFI
 
-rust/packet_engine/             Rust packet engine
+rust/packet_engine/                Rust packet engine
   src/
-    engine.rs                   Main orchestrator
-    ip.rs                       IPv4/IPv6 header parser
-    dns.rs                      DNS query + response parser
-    tls.rs                      TLS ClientHello / SNI extractor
-    tcp_reassembly.rs           Bounded TCP segment reassembly
-    dns_filter.rs               ECH downgrade (HTTPS RR stripping)
-    ech_correlator.rs           DNS/IP correlation
-    storage.rs                  SQLite writer (rusqlite)
-    domain.rs                   Domain normalization + noise filtering
-    lib.rs                      C FFI entry points
-
-backend/                        Cloud backend (Node.js/Express)
-  src/
-    routes/                     auth, config, analytics endpoints
-    services/                   JWT, Apple auth, user management
-    middleware/                  auth, rate limiting, error handling
-    db/                         PostgreSQL connection + migrations
+    engine.rs                      Packet processing pipeline + threat integration
+    threat_feed.rs                 Bloom filter feed loading (hosts file parser)
+    threat_matcher.rs              Multi-feed matching with allowlist bypass
+    dns.rs                         DNS query/response parser
+    tls.rs                         TLS ClientHello / SNI extractor
+    dns_filter.rs                  ECH downgrade (HTTPS RR stripping)
+    storage.rs                     SQLite storage (domains, alerts, allowlist)
+    lib.rs                         C FFI entry points
 
 scripts/
-  build-rust.sh                 Build Rust for a specific iOS target
-  build-universal.sh            Build for both device and simulator
-  generate-jwt-keys.sh          Generate RSA keys for backend JWT
+  build-rust.sh                    Build Rust for a specific iOS target
+  build-universal.sh               Build for both device and simulator
 ```
 
 ## Requirements
 
 - macOS 14+
-- Xcode 15+ (tested on Xcode 26)
+- Xcode 15+
 - Rust 1.75+ with iOS targets
-- Apple Developer account (paid, $99/year)
+- Apple Developer account (Organization enrollment required for VPN apps)
 - Physical iPhone for testing (Network Extension doesn't work on simulator)
 
 ## Getting started
@@ -92,7 +99,7 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 ./scripts/build-universal.sh
 ```
 
-This compiles `libpacket_engine.a` for both device and simulator, and copies the generated C header to the Xcode project.
+This compiles `libpacket_engine.a` for both device and simulator, generates the C header via cbindgen, and copies artifacts into the Xcode project.
 
 ### 3. Open in Xcode
 
@@ -100,41 +107,20 @@ This compiles `libpacket_engine.a` for both device and simulator, and copies the
 open ring/ring.xcodeproj
 ```
 
-Select your development team in Signing & Capabilities for both targets:
-- `ring` (main app)
+Select your development team in Signing & Capabilities for all targets:
+- `sentinel` (main app)
 - `PacketTunnelExtension`
+- `SentinelWidgetsExtension`
 
-The entitlements for Network Extension and App Groups are already configured in the `.entitlements` files.
+Configure the App Group `group.com.jimmykim.sentinel` in your Apple Developer portal.
 
 ### 4. Build and run
 
-Select your iPhone as the build destination and hit Cmd+R. The app will:
-
-1. Show a 3-step onboarding flow
-2. Request VPN permission (creates a local tunnel, not a remote proxy)
-3. Start capturing DNS queries when you browse
-
-### 5. Backend (optional)
-
-The backend handles auth, feature flags, and anonymous analytics. It's not required for the core domain monitoring functionality.
-
-```bash
-cd backend
-./scripts/generate-jwt-keys.sh
-docker compose up
-```
-
-See [backend README](backend/README.md) for details.
-
-## Architecture decisions
-
-**Why Rust for packet parsing?** The iOS Network Extension has a 6 MB memory limit. Rust's ownership model prevents leaks at compile time, and the zero-cost abstractions keep memory usage predictable. The engine typically runs at ~3 MB.
-
-**Why DNS-only capture (not all traffic)?** Forwarding raw IP packets requires a userspace TCP/IP stack. For the MVP, routing only DNS through the tunnel keeps the implementation simple while still capturing the majority of domain connections. SNI extraction from TLS is implemented in the Rust engine and ready for when full-traffic forwarding is added.
-
-**Why SQLite?** Cross-process safe (WAL mode), embedded, zero-config. The Rust engine writes, the Swift app reads. No coordination needed.
-
-**Why no GRDB?** The Swift DatabaseReader uses the raw SQLite3 C API directly (available on iOS), avoiding a third-party dependency. The API surface is small enough that a wrapper library adds complexity without benefit.
+Select your iPhone and hit Cmd+R. The app will:
+1. Show an onboarding flow
+2. Request VPN permission (local tunnel, not a remote proxy)
+3. Download threat feeds on first launch
+4. Start blocking malicious domains when you browse
 
 ## Testing
 
@@ -145,28 +131,27 @@ cd rust/packet_engine
 cargo test
 ```
 
-86 tests covering DNS parsing, TLS SNI extraction, TCP reassembly, ECH downgrade, SQLite storage, and the full processing pipeline.
+185 tests covering DNS parsing, TLS SNI extraction, TCP reassembly, ECH downgrade, threat feed loading, bloom filter matching, alert dedup, allowlist bypass, and the full processing pipeline.
 
-### iOS app
+## Architecture decisions
 
-Build and run on a physical device. Network Extensions don't function on the simulator (the app builds but the tunnel can't start).
+**Why Rust?** The iOS Network Extension has a 50 MB memory limit (15 MB on some devices). Rust's ownership model prevents leaks, and the bloom filter for 400K domains uses only ~700 KB. The entire engine runs at ~4 MB.
 
-### Backend
+**Why bloom filter instead of HashSet?** A HashSet of 400K domains costs ~29 MB — over half the jetsam budget. The bloom filter at 0.1% false positive rate costs ~700 KB with zero false negatives. False positives are handled via user-facing allowlist.
 
-```bash
-cd backend
-npm test
-```
+**Why DNS sinkhole?** Dropping packets causes a 5-second TCP timeout. Returning `A 0.0.0.0` makes the connection fail instantly, giving a better user experience.
+
+**Why UserDefaults for allowlist?** Writing to the shared SQLite from the main app risks `0xDEAD10CC` crashes when iOS suspends the app mid-write. UserDefaults is atomic and cross-process safe.
+
+**Why on-device?** Cloud DNS resolvers (NextDNS, AdGuard DNS) require sending every DNS query to a remote server. Sentinel's local approach means zero browsing data leaves the device — a genuine privacy differentiator.
 
 ## Privacy
 
-Ring is built around a simple principle: your browsing data stays on your device.
-
 - All packet analysis runs locally in the Network Extension process
-- Domain history is stored in a local SQLite database
-- The cloud backend (when used) handles only auth and feature flags — zero browsing data is transmitted
-- The VPN tunnel is local — traffic is observed and forwarded, not proxied through a remote server
-- DNS queries are forwarded to Google DNS (8.8.8.8) for resolution
+- Domain history and threat alerts are stored in a local SQLite database
+- Threat feeds are cached locally — no per-query lookups to external services
+- The VPN tunnel is local — traffic is observed and forwarded, not proxied
+- DNS queries are forwarded to system DNS servers for resolution
 
 ## License
 
