@@ -23,8 +23,10 @@ extension RustPacketEngine {
     enum ProcessResult {
         /// Forward the original packet unchanged.
         case forward
-        /// Replace the packet with the provided data.
+        /// Replace the packet with the provided data (e.g. ECH downgrade).
         case replace(Data)
+        /// Block: return a sinkhole DNS response (0.0.0.0) to the client.
+        case block(Data)
     }
 
     /// A snapshot of engine counters returned by `packet_engine_get_stats`.
@@ -125,14 +127,16 @@ final class RustPacketEngine {
 
         switch result {
         case 0:
-            // Engine signals: forward the original packet.
             return .forward
         case 1:
-            // Engine signals: use the modified packet in outputBuffer[0..<outLen].
+            // ECH downgrade: use the modified packet.
             let replaced = Data(outputBuffer[0..<Int(outLen)])
             return .replace(replaced)
+        case 2:
+            // DNS sinkhole: return blocked response to client.
+            let blocked = Data(outputBuffer[0..<Int(outLen)])
+            return .block(blocked)
         default:
-            // An error occurred; forward the original to avoid dropping traffic.
             return .forward
         }
     }

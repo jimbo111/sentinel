@@ -78,6 +78,7 @@ final class DatabaseReader {
         if rc == SQLITE_OK {
             db = handle
             sqlite3_busy_timeout(db, 5000)
+            self.ensureSentinelTables()
             print("[Ring DB] Opened successfully at \(path)")
         } else {
             let errMsg = String(cString: sqlite3_errmsg(handle))
@@ -92,6 +93,33 @@ final class DatabaseReader {
             sqlite3_close(db)
             self.db = nil
             self.schemaValid = false
+        }
+    }
+
+    /// Create sentinel tables if they don't exist yet.
+    /// Called on database open so the app can query threat data even if the
+    /// Network Extension hasn't run yet.
+    private func ensureSentinelTables() {
+        guard let db = db else { return }
+        let sql = "CREATE TABLE IF NOT EXISTS sentinel_alerts ("
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + "domain TEXT NOT NULL,"
+            + "threat_type TEXT NOT NULL,"
+            + "feed_name TEXT NOT NULL,"
+            + "confidence REAL NOT NULL,"
+            + "timestamp INTEGER NOT NULL,"
+            + "dismissed INTEGER NOT NULL DEFAULT 0);"
+            + "CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_timestamp ON sentinel_alerts(timestamp);"
+            + "CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_domain ON sentinel_alerts(domain);"
+            + "CREATE TABLE IF NOT EXISTS sentinel_allowlist ("
+            + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + "domain TEXT NOT NULL UNIQUE,"
+            + "added_ms INTEGER NOT NULL DEFAULT 0);"
+        var errMsg: UnsafeMutablePointer<CChar>?
+        sqlite3_exec(db, sql, nil, nil, &errMsg)
+        if let errMsg = errMsg {
+            print("[Ring DB] sentinel tables creation note: \(String(cString: errMsg))")
+            sqlite3_free(errMsg)
         }
     }
 
@@ -671,81 +699,42 @@ final class DatabaseReader {
 
     // MARK: - Allowlist Queries
 
-    /// All domains on the threat allowlist.
+    /// All domains on the threat allowlist (read from shared UserDefaults).
     func fetchAllowlist() -> [String] {
-        queue.sync {
-            ensureOpen()
-            guard let db = db else { return [] }
-
-            let sql = "SELECT domain FROM sentinel_allowlist ORDER BY domain ASC"
-
-            var stmt: OpaquePointer?
-            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
-            defer { sqlite3_finalize(stmt) }
-
-            var domains: [String] = []
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                domains.append(columnText(stmt, index: 0))
-            }
-            return domains
-        }
+        Self.allowlistFromDefaults().sorted()
     }
 
     /// Add a domain to the threat allowlist.
+    ///
+    /// Uses UserDefaults in the App Group as IPC — avoids SQLite write locks
+    /// from the main app process which would cause 0xDEAD10CC on suspension.
+    /// The Network Extension reads this on next packet to sync its in-memory
+    /// allowlist.
     func addToAllowlist(domain: String) {
-        queue.sync {
-            ensureOpen()
-            guard let db = db else { return }
-
-            let sql = "INSERT OR IGNORE INTO sentinel_allowlist (domain) VALUES (?)"
-
-            var stmt: OpaquePointer?
-            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
-            defer { sqlite3_finalize(stmt) }
-
-            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-            domain.withCString { cStr in
-                sqlite3_bind_text(stmt, 1, cStr, -1, transient)
-            }
-            sqlite3_step(stmt)
+        var list = Self.allowlistFromDefaults()
+        let lower = domain.lowercased()
+        if !list.contains(lower) {
+            list.append(lower)
+            AppGroupConfig.sharedDefaults.set(list, forKey: "sentinel_allowlist")
         }
     }
 
     /// Remove a domain from the threat allowlist.
     func removeFromAllowlist(domain: String) {
-        queue.sync {
-            ensureOpen()
-            guard let db = db else { return }
-
-            let sql = "DELETE FROM sentinel_allowlist WHERE domain = ?"
-
-            var stmt: OpaquePointer?
-            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return }
-            defer { sqlite3_finalize(stmt) }
-
-            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-            domain.withCString { cStr in
-                sqlite3_bind_text(stmt, 1, cStr, -1, transient)
-            }
-            sqlite3_step(stmt)
-        }
+        var list = Self.allowlistFromDefaults()
+        let lower = domain.lowercased()
+        list.removeAll { $0 == lower }
+        AppGroupConfig.sharedDefaults.set(list, forKey: "sentinel_allowlist")
     }
 
     /// Check if a domain is on the allowlist.
     func isAllowlisted(domain: String) -> Bool {
-        queue.sync {
-            ensureOpen()
-            guard let db = db else { return false }
+        Self.allowlistFromDefaults().contains(domain.lowercased())
+    }
 
-            let sql = "SELECT COUNT(*) FROM sentinel_allowlist WHERE domain = ?"
-            let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-            let count = scalarInt(db: db, sql: sql, bind: { stmt in
-                domain.withCString { cStr in
-                    sqlite3_bind_text(stmt, 1, cStr, -1, transient)
-                }
-            })
-            return count > 0
-        }
+    /// Read the current allowlist from shared UserDefaults.
+    static func allowlistFromDefaults() -> [String] {
+        AppGroupConfig.sharedDefaults.stringArray(forKey: "sentinel_allowlist") ?? []
     }
 
     // MARK: - Helpers

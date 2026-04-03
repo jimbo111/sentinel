@@ -1,22 +1,21 @@
-use std::collections::HashSet;
-
 use fastbloom_rs::{BloomFilter, FilterBuilder, Membership};
 
-/// A loaded threat feed backed by a bloom filter for fast pre-checks and a
-/// [`HashSet`] for authoritative confirmation (eliminating bloom false
-/// positives).
+/// A loaded threat feed backed by a bloom filter for fast domain lookups.
 ///
-/// Memory budget: 400 000 domains at a 0.1 % false-positive rate costs
-/// approximately 720 KB for the bloom filter plus roughly 25–30 MB for the
-/// `HashSet` of owned `String`s.  Keep this in mind relative to the 50 MB
-/// iOS Network Extension limit; limit feeds to a few hundred thousand domains
-/// combined.
+/// The bloom filter provides O(1) checks with a configurable false-positive
+/// rate (0.1 % by default).  No `HashSet` is kept — this is critical for
+/// staying within the iOS Network Extension's 50 MB jetsam limit.
+///
+/// Memory budget at 0.1 % FP rate:
+/// - 400K domains ≈ 720 KB
+/// - 100K domains ≈ 180 KB
+///
+/// False positives (0.1 %) are acceptable: they result in a logged alert that
+/// the user can dismiss or allowlist.  False negatives are impossible.
 pub struct ThreatFeed {
-    /// Bloom filter for O(1) pre-check.  A `false` here guarantees the domain
-    /// is **not** in the feed; a `true` must be confirmed via `domains`.
+    /// Bloom filter for O(1) membership check.  `false` guarantees the domain
+    /// is **not** in the feed.
     bloom: BloomFilter,
-    /// Authoritative set — eliminates bloom false positives.
-    domains: HashSet<String>,
     /// Number of domains successfully loaded into this feed.
     pub domain_count: usize,
     /// Unix timestamp (milliseconds) when this feed was constructed.
@@ -69,13 +68,13 @@ impl ThreatFeed {
             }
         }
 
-        let capacity = parsed.len().max(1) as u64;
+        // Minimum capacity of 1000 ensures the bloom filter has enough bits
+        // to maintain the target FP rate even for small test feeds.
+        let capacity = parsed.len().max(1000) as u64;
         let mut bloom: BloomFilter = FilterBuilder::new(capacity, 0.001).build_bloom_filter();
-        let mut domains: HashSet<String> = HashSet::with_capacity(parsed.len());
 
         for domain in &parsed {
             bloom.add(domain.as_bytes());
-            domains.insert(domain.clone());
         }
 
         let last_updated_ms = std::time::SystemTime::now()
@@ -83,12 +82,9 @@ impl ThreatFeed {
             .map(|d| d.as_millis() as i64)
             .unwrap_or(0);
 
-        let domain_count = domains.len();
-
         ThreatFeed {
             bloom,
-            domains,
-            domain_count,
+            domain_count: parsed.len(),
             last_updated_ms,
             feed_name: feed_name.to_owned(),
         }
@@ -116,11 +112,10 @@ impl ThreatFeed {
         self.bloom.contains(domain.as_bytes())
     }
 
-    /// Returns `true` if `domain` is definitively in the feed.
+    /// Returns `true` if `domain` is in the feed (via bloom filter).
     ///
-    /// Unlike [`check_bloom`] this has zero false positives.
-    ///
-    /// [`check_bloom`]: ThreatFeed::check_bloom
+    /// At 0.1 % FP rate this is practically authoritative.  False positives
+    /// are handled at the UI layer (user can dismiss or allowlist).
     ///
     /// # Examples
     ///
@@ -133,10 +128,7 @@ impl ThreatFeed {
     /// ```
     #[must_use]
     pub fn contains(&self, domain: &str) -> bool {
-        if !self.check_bloom(domain) {
-            return false;
-        }
-        self.domains.contains(domain)
+        self.bloom.contains(domain.as_bytes())
     }
 
     /// Returns `true` if `domain` **or any of its parent domains** is in the

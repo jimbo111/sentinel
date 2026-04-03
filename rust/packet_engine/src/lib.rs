@@ -119,23 +119,26 @@ pub unsafe extern "C" fn packet_engine_process(
         let engine = &mut *engine;
         let packet = std::slice::from_raw_parts(packet_data, packet_len);
 
-        match engine.process_packet(packet) {
+        let engine_result = engine.process_packet(packet);
+        match engine_result {
             ProcessResult::Forward => {
                 if !out_len.is_null() {
                     *out_len = 0;
                 }
                 0
             }
-            ProcessResult::Replace(new_packet) => {
+            ProcessResult::Replace(ref new_packet) | ProcessResult::Block(ref new_packet) => {
+                let is_block = matches!(engine_result, ProcessResult::Block(_));
                 if out_buf.is_null() || out_capacity < new_packet.len() {
                     return 0;
                 }
                 let out_slice = std::slice::from_raw_parts_mut(out_buf, out_capacity);
-                out_slice[..new_packet.len()].copy_from_slice(&new_packet);
+                out_slice[..new_packet.len()].copy_from_slice(new_packet);
                 if !out_len.is_null() {
                     *out_len = new_packet.len();
                 }
-                1
+                // 1 = replace (ECH downgrade), 2 = block (DNS sinkhole)
+                if is_block { 2 } else { 1 }
             }
         }
     }));

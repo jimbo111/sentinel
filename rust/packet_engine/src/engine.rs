@@ -25,6 +25,8 @@ pub enum ProcessResult {
     Forward,
     /// Replace the original packet with this modified version
     Replace(Vec<u8>),
+    /// Block: synthesize a DNS response with 0.0.0.0 (sinkhole)
+    Block(Vec<u8>),
 }
 
 /// The main packet processing engine.
@@ -186,6 +188,8 @@ impl PacketEngine {
         // Outbound DNS query (to port 53)
         if dst_port == DNS_PORT {
             let records = dns::parse_dns_query(udp_payload);
+            let mut should_block = false;
+
             for record in records {
                 if self.noise_filter_enabled && crate::domain::is_noise_domain(&record.domain) {
                     continue;
@@ -195,12 +199,28 @@ impl PacketEngine {
                 // Threat check before buffering the domain.
                 if let Some(ref mut matcher) = self.threat_matcher {
                     if let Some(threat) = matcher.check_domain(&record.domain) {
+                        should_block = true;
                         self.pending_alerts.push(threat);
                     }
                 }
 
                 self.pending_domains
                     .push(record.with_source(DetectionSource::Dns));
+            }
+
+            // If a threat was detected, synthesize a sinkhole DNS response
+            // (A 0.0.0.0) so the connection fails immediately instead of
+            // timing out after 5 seconds.
+            if should_block {
+                if let Some(sinkhole) = build_dns_sinkhole_response(udp_payload) {
+                    let blocked_packet = rebuild_udp_packet(
+                        full_packet,
+                        ip_header,
+                        transport_data,
+                        &sinkhole,
+                    );
+                    return ProcessResult::Block(blocked_packet);
+                }
             }
 
             // Capture all query types (including non-A/AAAA) as metadata.
@@ -670,6 +690,68 @@ fn recalculate_ipv4_checksum(packet: &mut [u8], header_len: usize) {
     let checksum = !sum as u16;
     packet[10] = (checksum >> 8) as u8;
     packet[11] = (checksum & 0xFF) as u8;
+}
+
+/// Build a DNS sinkhole response for a blocked query.
+///
+/// Takes the original DNS query payload and constructs a valid DNS response
+/// with the same transaction ID and question section, but answering with
+/// `A 0.0.0.0` (TTL 60s).  Returns `None` if the query payload is too short
+/// to parse.
+fn build_dns_sinkhole_response(query_payload: &[u8]) -> Option<Vec<u8>> {
+    // Minimum DNS header is 12 bytes.
+    if query_payload.len() < 12 {
+        return None;
+    }
+
+    let mut resp = Vec::with_capacity(query_payload.len() + 16);
+
+    // Copy transaction ID (bytes 0–1).
+    resp.extend_from_slice(&query_payload[0..2]);
+
+    // Flags: 0x8180 = response, recursion desired + available, no error.
+    resp.extend_from_slice(&[0x81, 0x80]);
+
+    // QDCOUNT = 1 (copy from query for safety, but force to 1).
+    resp.extend_from_slice(&[0x00, 0x01]);
+    // ANCOUNT = 1.
+    resp.extend_from_slice(&[0x00, 0x01]);
+    // NSCOUNT = 0, ARCOUNT = 0.
+    resp.extend_from_slice(&[0x00, 0x00, 0x00, 0x00]);
+
+    // Copy the question section from the original query.
+    // Walk past the 12-byte header to find the end of the QNAME.
+    let mut pos = 12;
+    while pos < query_payload.len() {
+        let label_len = query_payload[pos] as usize;
+        if label_len == 0 {
+            pos += 1; // skip the zero-length root label
+            break;
+        }
+        pos += 1 + label_len;
+    }
+    // QTYPE (2 bytes) + QCLASS (2 bytes).
+    pos += 4;
+
+    if pos > query_payload.len() {
+        return None;
+    }
+
+    // Append question section.
+    resp.extend_from_slice(&query_payload[12..pos]);
+
+    // Answer section: NAME = pointer to offset 12 (0xC00C), TYPE A, CLASS IN,
+    // TTL 60, RDLENGTH 4, RDATA 0.0.0.0.
+    resp.extend_from_slice(&[
+        0xC0, 0x0C, // name pointer to question QNAME
+        0x00, 0x01, // TYPE = A
+        0x00, 0x01, // CLASS = IN
+        0x00, 0x00, 0x00, 0x3C, // TTL = 60 seconds
+        0x00, 0x04, // RDLENGTH = 4
+        0x00, 0x00, 0x00, 0x00, // RDATA = 0.0.0.0
+    ]);
+
+    Some(resp)
 }
 
 #[cfg(test)]
