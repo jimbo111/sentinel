@@ -1,0 +1,58 @@
+Ring DNS Stress Test: sustained
+Date: 2026-03-21 04:18:03 +0000
+Server: 8.8.8.8:53
+
+Total: 50  Success: 50 (100.0%)  Timeout: 0  Errors: 0
+Latency (ms): avg=285.2 min=17.2 p50=274.2 p95=526.9 max=562.1
+
+Per-query:
+  0x2000: google.com -> OK 562.1ms
+  0x2001: youtube.com -> OK 549.6ms
+  0x2002: facebook.com -> OK 537.0ms
+  0x2003: amazon.com -> OK 526.9ms
+  0x2004: twitter.com -> OK 515.8ms
+  0x2005: instagram.com -> OK 505.7ms
+  0x2006: linkedin.com -> OK 495.6ms
+  0x2007: reddit.com -> OK 485.3ms
+  0x2008: netflix.com -> OK 473.5ms
+  0x2009: github.com -> OK 463.3ms
+  0x200a: stackoverflow.com -> OK 452.9ms
+  0x200b: apple.com -> OK 442.6ms
+  0x200c: microsoft.com -> OK 432.4ms
+  0x200d: wikipedia.org -> OK 421.4ms
+  0x200e: yahoo.com -> OK 410.8ms
+  0x200f: naver.com -> OK 398.6ms
+  0x2010: coupang.com -> OK 385.9ms
+  0x2011: kakao.com -> OK 373.5ms
+  0x2012: tiktok.com -> OK 360.8ms
+  0x2013: spotify.com -> OK 348.5ms
+  0x2014: discord.com -> OK 335.8ms
+  0x2015: twitch.tv -> OK 324.4ms
+  0x2016: pinterest.com -> OK 311.7ms
+  0x2017: ebay.com -> OK 299.5ms
+  0x2018: walmart.com -> OK 287.0ms
+  0x2019: cnn.com -> OK 274.2ms
+  0x201a: bbc.com -> OK 263.5ms
+  0x201b: nytimes.com -> OK 252.1ms
+  0x201c: bloomberg.com -> OK 242.0ms
+  0x201d: reuters.com -> OK 229.4ms
+  0x201e: i.ytimg.com -> OK 219.0ms
+  0x201f: yt3.ggpht.com -> OK 206.4ms
+  0x2020: googlevideo.com -> OK 196.1ms
+  0x2021: fbcdn.net -> OK 184.0ms
+  0x2022: cdninstagram.com -> OK 173.8ms
+  0x2023: ssl-images-amazon.com -> OK 161.3ms
+  0x2024: pstatic.net -> OK 150.9ms
+  0x2025: daumcdn.net -> OK 188.1ms
+  0x2026: twimg.com -> OK 127.8ms
+  0x2027: redditmedia.com -> OK 115.3ms
+  0x2028: cloudflare.com -> OK 105.1ms
+  0x2029: googleapis.com -> OK 93.3ms
+  0x202a: gstatic.com -> OK 82.8ms
+  0x202b: akamaiedge.net -> OK 72.7ms
+  0x202c: fastly.net -> OK 62.6ms
+  0x202d: stripe.com -> OK 52.1ms
+  0x202e: zoom.us -> OK 40.8ms
+  0x202f: slack.com -> OK 30.7ms
+  0x2030: notion.so -> OK 20.4ms
+  0x2031: figma.com -> OK 17.2ms

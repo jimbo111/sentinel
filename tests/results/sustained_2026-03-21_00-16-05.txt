@@ -1,0 +1,38 @@
+Ring DNS Stress Test: sustained
+Date: 2026-03-21 04:16:05 +0000
+Server: 8.8.8.8:53
+
+Total: 30  Success: 24 (80.0%)  Timeout: 6  Errors: 0
+Latency (ms): avg=106.3 min=41.3 p50=101.2 p95=163.6 max=174.0
+
+Per-query:
+  0x2000: google.com -> OK 174.0ms
+  0x2001: youtube.com -> OK 169.0ms
+  0x2002: facebook.com -> OK 163.6ms
+  0x2003: amazon.com -> OK 157.4ms
+  0x2004: twitter.com -> OK 152.1ms
+  0x2005: instagram.com -> OK 146.5ms
+  0x2006: linkedin.com -> OK 141.2ms
+  0x2007: reddit.com -> OK 135.9ms
+  0x2008: netflix.com -> OK 129.4ms
+  0x2009: github.com -> OK 123.2ms
+  0x200a: stackoverflow.com -> TIMEOUT -
+  0x200b: apple.com -> OK 112.8ms
+  0x200c: microsoft.com -> OK 107.6ms
+  0x200d: wikipedia.org -> OK 101.2ms
+  0x200e: yahoo.com -> OK 94.7ms
+  0x200f: naver.com -> OK 88.3ms
+  0x2010: coupang.com -> OK 82.6ms
+  0x2011: kakao.com -> OK 77.4ms
+  0x2012: tiktok.com -> OK 72.1ms
+  0x2013: spotify.com -> OK 66.9ms
+  0x2014: discord.com -> OK 60.5ms
+  0x2015: twitch.tv -> OK 54.1ms
+  0x2016: pinterest.com -> OK 47.7ms
+  0x2017: ebay.com -> OK 41.3ms
+  0x2018: walmart.com -> TIMEOUT -
+  0x2019: cnn.com -> OK 51.2ms
+  0x201a: bbc.com -> TIMEOUT -
+  0x201b: nytimes.com -> TIMEOUT -
+  0x201c: bloomberg.com -> TIMEOUT -
+  0x201d: reuters.com -> TIMEOUT -

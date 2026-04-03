@@ -1,0 +1,13 @@
+Ring DNS Stress Test: sustained
+Date: 2026-03-21 13:56:48 +0000
+Server: 8.8.8.8:53
+
+Total: 5  Success: 5 (100.0%)  Timeout: 0  Errors: 0
+Latency (ms): avg=34.4 min=14.0 p50=34.4 p95=44.6 max=57.2
+
+Per-query:
+  0x2000: google.com -> OK 57.2ms
+  0x2001: youtube.com -> OK 44.6ms
+  0x2002: facebook.com -> OK 34.4ms
+  0x2003: amazon.com -> OK 21.8ms
+  0x2004: twitter.com -> OK 14.0ms

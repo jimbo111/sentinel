@@ -1,0 +1,38 @@
+Ring DNS Stress Test: retry
+Date: 2026-03-21 04:22:57 +0000
+Server: 8.8.8.8:53
+
+Total: 30  Success: 30 (100.0%)  Timeout: 0  Errors: 0
+Latency (ms): avg=6012.7 min=6012.4 p50=6012.7 p95=6013.0 max=6013.1
+
+Per-query:
+  0x3000: google.com -> OK 6013.1ms
+  0x3001: youtube.com -> OK 6013.0ms
+  0x3002: facebook.com -> OK 6013.1ms
+  0x3003: amazon.com -> OK 6012.9ms
+  0x3004: twitter.com -> OK 6012.9ms
+  0x3005: instagram.com -> OK 6013.0ms
+  0x3006: linkedin.com -> OK 6012.9ms
+  0x3007: reddit.com -> OK 6012.8ms
+  0x3008: netflix.com -> OK 6012.9ms
+  0x3009: github.com -> OK 6012.9ms
+  0x300a: stackoverflow.com -> OK 6012.8ms
+  0x300b: apple.com -> OK 6012.7ms
+  0x300c: microsoft.com -> OK 6012.7ms
+  0x300d: wikipedia.org -> OK 6012.8ms
+  0x300e: yahoo.com -> OK 6012.7ms
+  0x300f: naver.com -> OK 6012.7ms
+  0x3010: coupang.com -> OK 6012.7ms
+  0x3011: kakao.com -> OK 6012.7ms
+  0x3012: tiktok.com -> OK 6012.7ms
+  0x3013: spotify.com -> OK 6012.6ms
+  0x3014: discord.com -> OK 6012.6ms
+  0x3015: twitch.tv -> OK 6012.5ms
+  0x3016: pinterest.com -> OK 6012.5ms
+  0x3017: ebay.com -> OK 6012.5ms
+  0x3018: walmart.com -> OK 6012.5ms
+  0x3019: cnn.com -> OK 6012.4ms
+  0x301a: bbc.com -> OK 6012.4ms
+  0x301b: nytimes.com -> OK 6012.4ms
+  0x301c: bloomberg.com -> OK 6012.4ms
+  0x301d: reuters.com -> OK 6012.4ms

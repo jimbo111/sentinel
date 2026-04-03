@@ -1,0 +1,58 @@
+Ring DNS Stress Test: sustained
+Date: 2026-03-21 04:14:54 +0000
+Server: 8.8.8.8:53
+
+Total: 50  Success: 49 (98.0%)  Timeout: 1  Errors: 0
+Latency (ms): avg=1350.7 min=55.2 p50=1375.6 p95=2486.7 max=2650.3
+
+Per-query:
+  0x2000: google.com -> OK 2650.3ms
+  0x2001: youtube.com -> OK 2596.2ms
+  0x2002: facebook.com -> OK 2541.1ms
+  0x2003: amazon.com -> OK 2486.7ms
+  0x2004: twitter.com -> OK 2431.5ms
+  0x2005: instagram.com -> OK 2376.4ms
+  0x2006: linkedin.com -> OK 2321.4ms
+  0x2007: reddit.com -> OK 2269.3ms
+  0x2008: netflix.com -> OK 2217.9ms
+  0x2009: github.com -> OK 2163.9ms
+  0x200a: stackoverflow.com -> OK 2109.5ms
+  0x200b: apple.com -> OK 2059.0ms
+  0x200c: microsoft.com -> OK 2005.3ms
+  0x200d: wikipedia.org -> OK 1953.0ms
+  0x200e: yahoo.com -> OK 1902.6ms
+  0x200f: naver.com -> OK 1847.5ms
+  0x2010: coupang.com -> OK 1796.1ms
+  0x2011: kakao.com -> OK 1744.5ms
+  0x2012: tiktok.com -> OK 1694.2ms
+  0x2013: spotify.com -> OK 1639.3ms
+  0x2014: discord.com -> OK 1584.5ms
+  0x2015: twitch.tv -> OK 1533.3ms
+  0x2016: pinterest.com -> OK 1478.5ms
+  0x2017: ebay.com -> OK 1426.9ms
+  0x2018: walmart.com -> OK 1375.6ms
+  0x2019: cnn.com -> OK 1321.5ms
+  0x201a: bbc.com -> OK 1266.4ms
+  0x201b: nytimes.com -> TIMEOUT -
+  0x201c: bloomberg.com -> OK 1165.6ms
+  0x201d: reuters.com -> OK 1113.9ms
+  0x201e: i.ytimg.com -> OK 1063.3ms
+  0x201f: yt3.ggpht.com -> OK 1010.0ms
+  0x2020: googlevideo.com -> OK 955.0ms
+  0x2021: fbcdn.net -> OK 900.2ms
+  0x2022: cdninstagram.com -> OK 848.2ms
+  0x2023: ssl-images-amazon.com -> OK 796.4ms
+  0x2024: pstatic.net -> OK 742.9ms
+  0x2025: daumcdn.net -> OK 688.3ms
+  0x2026: twimg.com -> OK 634.2ms
+  0x2027: redditmedia.com -> OK 579.9ms
+  0x2028: cloudflare.com -> OK 528.7ms
+  0x2029: googleapis.com -> OK 474.5ms
+  0x202a: gstatic.com -> OK 421.7ms
+  0x202b: akamaiedge.net -> OK 366.1ms
+  0x202c: fastly.net -> OK 313.4ms
+  0x202d: stripe.com -> OK 262.6ms
+  0x202e: zoom.us -> OK 208.7ms
+  0x202f: slack.com -> OK 156.1ms
+  0x2030: notion.so -> OK 105.6ms
+  0x2031: figma.com -> OK 55.2ms

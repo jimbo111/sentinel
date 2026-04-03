@@ -1,0 +1,35 @@
+Ring DNS Stress Test: burst
+Date: 2026-03-21 19:02:20 +0000
+Server: 8.8.8.8:53
+
+Total: 27  Success: 27 (100.0%)  Timeout: 0  Errors: 0
+Latency (ms): avg=22.4 min=15.2 p50=20.6 p95=25.0 max=86.0
+
+Per-query:
+  0x1000: google.com -> OK 22.7ms
+  0x1001: youtube.com -> OK 20.8ms
+  0x1002: facebook.com -> OK 22.7ms
+  0x1003: amazon.com -> OK 15.4ms
+  0x1004: twitter.com -> OK 15.4ms
+  0x1005: instagram.com -> OK 22.7ms
+  0x1006: linkedin.com -> OK 25.0ms
+  0x1007: reddit.com -> OK 15.4ms
+  0x1008: netflix.com -> OK 25.0ms
+  0x1009: github.com -> OK 28.8ms
+  0x100a: stackoverflow.com -> OK 86.0ms
+  0x100b: apple.com -> OK 15.3ms
+  0x100c: microsoft.com -> OK 15.3ms
+  0x100d: wikipedia.org -> OK 24.9ms
+  0x100e: yahoo.com -> OK 15.3ms
+  0x100f: naver.com -> OK 15.3ms
+  0x1010: coupang.com -> OK 24.9ms
+  0x1011: kakao.com -> OK 20.6ms
+  0x1012: tiktok.com -> OK 24.8ms
+  0x1013: spotify.com -> OK 15.2ms
+  0x1014: discord.com -> OK 24.8ms
+  0x1015: twitch.tv -> OK 15.2ms
+  0x1016: pinterest.com -> OK 20.5ms
+  0x1017: ebay.com -> OK 15.2ms
+  0x1018: walmart.com -> OK 24.7ms
+  0x1019: cnn.com -> OK 15.2ms
+  0x101a: bbc.com -> OK 16.7ms
