@@ -72,6 +72,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 let filterNoise = AppGroupConfig.sharedDefaults.object(forKey: "filterNoise") as? Bool ?? true
                 engine.setNoiseFilter(enabled: filterNoise)
 
+                // Load cached threat feeds from App Group container.
+                self.loadCachedThreatFeeds(engine: engine)
+
+                // Sync allowlist from UserDefaults into the Rust engine.
+                self.syncAllowlist(engine: engine)
+
                 self.queue.sync {
                     self.rustEngine = engine
                     self.dnsForwarder = forwarder
@@ -279,6 +285,47 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
     }
 
+    // MARK: - Threat Feed Loading
+
+    /// Load cached threat feed files from the App Group container into the
+    /// Rust engine.  Called once during `startTunnel`, on the same thread
+    /// before the packet loop starts (no race condition).
+    private func loadCachedThreatFeeds(engine: RustPacketEngine) {
+        let container = AppGroupConfig.containerURL
+        let feeds: [(filename: String, name: String)] = [
+            ("hagezi-pro.txt", "hagezi-pro"),
+            ("urlhaus-hosts.txt", "urlhaus-malware"),
+        ]
+        for feed in feeds {
+            let url = container.appendingPathComponent(feed.filename)
+            guard let data = try? String(contentsOf: url, encoding: .utf8) else {
+                writeDebugStatus("feed_miss: \(feed.filename) not cached yet")
+                continue
+            }
+            let ok = engine.loadThreatFeed(data: data, feedName: feed.name)
+            writeDebugStatus("feed_loaded: \(feed.name) ok=\(ok) size=\(data.count)")
+        }
+    }
+
+    /// Sync the allowlist from shared UserDefaults into the Rust engine's
+    /// in-memory allowlist.
+    private func syncAllowlist(engine: RustPacketEngine) {
+        let list = AppGroupConfig.sharedDefaults.stringArray(forKey: "sentinel_allowlist") ?? []
+        for domain in list {
+            _ = engine.addAllowlistDomain(domain)
+        }
+        writeDebugStatus("allowlist_synced: \(list.count) domains")
+    }
+
+    /// Post a Darwin notification so the main app's threat dashboard refreshes.
+    private func notifyAppOfThreatAlert() {
+        let name = CFNotificationName(AppGroupConfig.threatAlertNotification as CFString)
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            name, nil, nil, true
+        )
+    }
+
     // MARK: - Packet Processing
 
     private var totalPacketsReceived: Int = 0
@@ -312,8 +359,18 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 var outPacket = packetData
                 if let engine = engine {
                     let result = engineQueue.sync { engine.processPacket(packetData) }
-                    if case .replace(let modified) = result {
+                    switch result {
+                    case .replace(let modified):
                         outPacket = modified
+                    case .block(let sinkhole):
+                        // DNS sinkhole: write the 0.0.0.0 response back to the
+                        // tunnel so the client gets an immediate failure instead
+                        // of a 5-second timeout.  Do NOT forward to the real DNS.
+                        self.packetFlow.writePackets([sinkhole], withProtocols: [protocols[i]])
+                        self.queue.async { self.notifyAppOfThreatAlert() }
+                        continue
+                    case .forward:
+                        break
                     }
                 }
 
@@ -321,10 +378,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                     guard let engine = engine else { return responsePacket }
                     return engineQueue.sync {
                         let result = engine.processPacket(responsePacket)
-                        if case .replace(let modified) = result {
+                        switch result {
+                        case .replace(let modified):
                             return modified
+                        case .block(let sinkhole):
+                            return sinkhole
+                        case .forward:
+                            return responsePacket
                         }
-                        return responsePacket
                     }
                 }
             }

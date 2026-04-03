@@ -107,9 +107,9 @@ final class DatabaseReader {
             + "threat_type TEXT NOT NULL,"
             + "feed_name TEXT NOT NULL,"
             + "confidence REAL NOT NULL,"
-            + "timestamp INTEGER NOT NULL,"
+            + "timestamp_ms INTEGER NOT NULL,"
             + "dismissed INTEGER NOT NULL DEFAULT 0);"
-            + "CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_timestamp ON sentinel_alerts(timestamp);"
+            + "CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_timestamp ON sentinel_alerts(timestamp_ms);"
             + "CREATE INDEX IF NOT EXISTS idx_sentinel_alerts_domain ON sentinel_alerts(domain);"
             + "CREATE TABLE IF NOT EXISTS sentinel_allowlist ("
             + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -601,9 +601,9 @@ final class DatabaseReader {
             guard let db = db else { return [] }
 
             let sql = """
-                SELECT id, domain, threat_type, feed_name, confidence, timestamp, dismissed
+                SELECT id, domain, threat_type, feed_name, confidence, timestamp_ms, dismissed
                 FROM sentinel_alerts
-                ORDER BY timestamp DESC
+                ORDER BY timestamp_ms DESC
                 LIMIT ?
                 """
 
@@ -646,7 +646,7 @@ final class DatabaseReader {
             let ms = Int64(date.timeIntervalSince1970 * 1000)
             return scalarInt(
                 db: db,
-                sql: "SELECT COUNT(*) FROM sentinel_alerts WHERE timestamp >= ?",
+                sql: "SELECT COUNT(*) FROM sentinel_alerts WHERE timestamp_ms >= ?",
                 bind: { stmt in sqlite3_bind_int64(stmt, 1, ms) }
             )
         }

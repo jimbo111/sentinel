@@ -1,5 +1,5 @@
 use crate::ip::{self, IpProtocol};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 // Compile-time assertion: BATCH_FLUSH_INTERVAL_MS must fit in i64 so that the
 // cast in maybe_flush is safe for any future value of the constant.
@@ -57,6 +57,9 @@ pub struct PacketEngine {
     threat_matcher: Option<ThreatMatcher>,
     /// Pending threat alerts to flush to SQLite.
     pending_alerts: Vec<ThreatMatch>,
+    /// Domains that have already produced an alert in this session.
+    /// Prevents duplicate alerts for the same domain queried repeatedly.
+    alerted_domains: HashSet<String>,
 }
 
 /// Aggregate statistics for threat detection.
@@ -106,6 +109,7 @@ impl PacketEngine {
             noise_filter_enabled: true,
             threat_matcher: None,
             pending_alerts: Vec::new(),
+            alerted_domains: HashSet::new(),
         })
     }
 
@@ -200,7 +204,10 @@ impl PacketEngine {
                 if let Some(ref mut matcher) = self.threat_matcher {
                     if let Some(threat) = matcher.check_domain(&record.domain) {
                         should_block = true;
-                        self.pending_alerts.push(threat);
+                        // Dedup: only record one alert per domain per session.
+                        if self.alerted_domains.insert(threat.domain.clone()) {
+                            self.pending_alerts.push(threat);
+                        }
                     }
                 }
 
