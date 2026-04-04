@@ -4,6 +4,6 @@ import SwiftUI
 @main
 struct SentinelWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        RingWidgetsLiveActivity()
+        SentinelWidgetsLiveActivity()
     }
 }
