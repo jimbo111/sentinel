@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9AE9B152F6C5AE9007F3100"
-               BuildableName = "ring.app"
-               BlueprintName = "ring"
+               BuildableName = "sentinel.app"
+               BlueprintName = "sentinel"
                ReferencedContainer = "container:sentinel.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -36,8 +36,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9AE9B2C2F6C5AEA007F3100"
-               BuildableName = "ringUITests.xctest"
-               BlueprintName = "ringUITests"
+               BuildableName = "sentinelUITests.xctest"
+               BlueprintName = "sentinelUITests"
                ReferencedContainer = "container:sentinel.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -47,8 +47,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9AE9B222F6C5AEA007F3100"
-               BuildableName = "ringTests.xctest"
-               BlueprintName = "ringTests"
+               BuildableName = "sentinelTests.xctest"
+               BlueprintName = "sentinelTests"
                ReferencedContainer = "container:sentinel.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -69,8 +69,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C9AE9B152F6C5AE9007F3100"
-            BuildableName = "ring.app"
-            BlueprintName = "ring"
+            BuildableName = "sentinel.app"
+            BlueprintName = "sentinel"
             ReferencedContainer = "container:sentinel.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -86,8 +86,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C9AE9B152F6C5AE9007F3100"
-            BuildableName = "ring.app"
-            BlueprintName = "ring"
+            BuildableName = "sentinel.app"
+            BlueprintName = "sentinel"
             ReferencedContainer = "container:sentinel.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

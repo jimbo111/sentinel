@@ -1,22 +1,23 @@
 import SwiftUI
 
 enum Theme {
-    // Primary palette (derived from crypto-wallet)
-    static let lavender = Color(red: 216/255, green: 200/255, blue: 240/255)
-    static let amber = Color(red: 232/255, green: 205/255, blue: 122/255)
-    static let lime = Color(red: 212/255, green: 245/255, blue: 66/255)
+    // Primary palette — Google-inspired
+    static let blue = Color(red: 66/255, green: 133/255, blue: 244/255)    // #4285F4
+    static let red = Color(red: 234/255, green: 67/255, blue: 53/255)      // #EA4335
+    static let yellow = Color(red: 251/255, green: 188/255, blue: 5/255)   // #FBBC05
+    static let green = Color(red: 52/255, green: 168/255, blue: 83/255)    // #34A853
 
-    // App accent — muted purple, visible in both light and dark mode
-    static let accent = Color(red: 140/255, green: 100/255, blue: 200/255)
+    // App accent — Google blue, visible in both light and dark mode
+    static let accent = blue
 
     // Status colors
-    static let connected = Color(red: 120/255, green: 210/255, blue: 90/255)
-    static let transitioning = amber
+    static let connected = green
+    static let transitioning = yellow
 
     // Threat severity colors
-    static let threatRed = Color(red: 220/255, green: 60/255, blue: 60/255)
-    static let threatOrange = Color(red: 235/255, green: 150/255, blue: 50/255)
-    static let threatYellow = Color(red: 230/255, green: 200/255, blue: 60/255)
+    static let threatRed = red
+    static let threatOrange = Color(red: 245/255, green: 124/255, blue: 0/255)
+    static let threatYellow = yellow
 
     // Card system (crypto-wallet layout pattern)
     static let cardBackground = Color(.secondarySystemGroupedBackground)
