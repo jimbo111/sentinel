@@ -29,6 +29,15 @@ actor ThreatFeedService {
     ]
 
     private static let lastUpdatedKeyPrefix = "threatfeed_updated_"
+    private static let lastDomainCountKeyPrefix = "threatfeed_domaincount_"
+
+    /// 50 MB — any feed larger than this is likely compromised or garbage data.
+    private static let maxFeedSizeBytes = 50 * 1024 * 1024
+
+    /// Minimum domain count threshold for truncation-attack detection.
+    private static let truncationWarningThreshold = 10_000
+    /// If a previously-large feed shrinks below this count, warn.
+    private static let truncationMinCount = 100
 
     // MARK: - Public API
 
@@ -49,6 +58,28 @@ actor ThreatFeedService {
                     continue
                 }
 
+                // --- Validation: max feed size ---
+                if data.count > Self.maxFeedSizeBytes {
+                    os_log(.error, log: log, "Feed %{public}@ rejected: %d bytes exceeds 50 MB limit (possible compromise)", feed.name, data.count)
+                    if let cached = readCachedFeed(filename: feed.filename) {
+                        results.append((name: feed.name, data: cached))
+                    }
+                    continue
+                }
+
+                // --- Validation: content sniff for HTML error pages ---
+                let sniffLength = min(data.count, 100)
+                if sniffLength > 0 {
+                    let prefix = String(data: data[0..<sniffLength], encoding: .utf8)?.lowercased() ?? ""
+                    if prefix.contains("<html") || prefix.contains("<!doctype") {
+                        os_log(.error, log: log, "Feed %{public}@ rejected: response looks like HTML (CDN error page)", feed.name)
+                        if let cached = readCachedFeed(filename: feed.filename) {
+                            results.append((name: feed.name, data: cached))
+                        }
+                        continue
+                    }
+                }
+
                 guard let text = String(data: data, encoding: .utf8) else {
                     os_log(.error, log: log, "Feed %{public}@ data is not valid UTF-8", feed.name)
                     if let cached = readCachedFeed(filename: feed.filename) {
@@ -57,15 +88,26 @@ actor ThreatFeedService {
                     continue
                 }
 
+                // --- Validation: truncation-attack detection ---
+                let domainCount = text.components(separatedBy: .newlines)
+                    .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+                    .count
+                let defaults = UserDefaults(suiteName: AppGroupConfig.groupIdentifier)
+                let previousCount = defaults?.integer(forKey: Self.lastDomainCountKeyPrefix + feed.name) ?? 0
+                if previousCount > Self.truncationWarningThreshold && domainCount < Self.truncationMinCount {
+                    os_log(.fault, log: log, "Feed %{public}@ possible truncation: was %d domains, now %d — loading anyway", feed.name, previousCount, domainCount)
+                }
+                // Store current domain count for future comparison
+                defaults?.set(domainCount, forKey: Self.lastDomainCountKeyPrefix + feed.name)
+
                 // Write to App Group container
                 let path = feedPath(filename: feed.filename)
                 try data.write(to: path, options: .atomic)
 
                 // Store last-updated timestamp
-                let defaults = UserDefaults(suiteName: AppGroupConfig.groupIdentifier)
                 defaults?.set(Date().timeIntervalSince1970, forKey: Self.lastUpdatedKeyPrefix + feed.name)
 
-                os_log(.info, log: log, "Feed %{public}@ downloaded: %d bytes", feed.name, data.count)
+                os_log(.info, log: log, "Feed %{public}@ downloaded: %d bytes, %d domains", feed.name, data.count, domainCount)
                 results.append((name: feed.name, data: text))
 
             } catch {
