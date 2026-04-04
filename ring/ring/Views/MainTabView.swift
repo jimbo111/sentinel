@@ -8,12 +8,12 @@ struct MainTabView: View {
         TabView {
             ThreatDashboardView()
                 .tabItem {
-                    Label("Security", systemImage: "shield.checkered")
+                    Label("Security", systemImage: "shield.lefthalf.filled")
                 }
 
             ConnectionView()
                 .tabItem {
-                    Label("Home", systemImage: "network")
+                    Label("Connection", systemImage: "network")
                 }
 
             DomainListView()
