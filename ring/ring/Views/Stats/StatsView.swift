@@ -348,7 +348,7 @@ struct StatsView: View {
                 ContentUnavailableView(
                     "No Categories Yet",
                     systemImage: "square.grid.2x2",
-                    description: Text("Browse with Ring connected to see your activity breakdown.")
+                    description: Text("Browse with Sentinel connected to see your activity breakdown.")
                 )
                 .frame(minHeight: 300)
             } else {
