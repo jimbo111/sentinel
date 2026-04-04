@@ -4,6 +4,7 @@ import SwiftUI
 struct ThreatDetailView: View {
     let threat: ThreatRecord
 
+    @Environment(\.dismiss) private var dismiss
     @State private var isAllowlisted = false
     @State private var showAllowlistConfirm = false
 
@@ -95,6 +96,10 @@ struct ThreatDetailView: View {
             Button("Allowlist") {
                 DatabaseReader.shared.addToAllowlist(domain: threat.domain)
                 isAllowlisted = true
+                // Brief pause so the user sees the success banner, then pop back.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    dismiss()
+                }
             }
         } message: {
             Text("Future connections to \(threat.domain) will no longer be blocked. Only allowlist domains you trust.")
