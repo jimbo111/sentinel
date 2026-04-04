@@ -3,6 +3,7 @@ import SwiftUI
 /// Main security dashboard showing threat statistics and recent blocked threats.
 struct ThreatDashboardView: View {
     @StateObject private var viewModel = ThreatDashboardViewModel()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -57,6 +58,11 @@ struct ThreatDashboardView: View {
             }
             .refreshable {
                 viewModel.refresh()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    viewModel.refresh()
+                }
             }
         }
     }
