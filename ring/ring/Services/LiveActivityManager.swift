@@ -2,7 +2,7 @@ import ActivityKit
 import Foundation
 import os.log
 
-/// Manages the lifecycle of the Ring Live Activity shown on the lock screen
+/// Manages the lifecycle of the Sentinel Live Activity shown on the lock screen
 /// and Dynamic Island. Singleton — driven by `ConnectionViewModel`.
 @MainActor
 final class LiveActivityManager {

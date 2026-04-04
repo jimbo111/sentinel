@@ -21,7 +21,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func startTunnel(options: [String: NSObject]?, completionHandler: @escaping (Error?) -> Void) {
         #if DEBUG
-        NSLog("[Ring Tunnel] startTunnel called")
+        NSLog("[Sentinel Tunnel] startTunnel called")
         #endif
         os_log("Starting tunnel", log: log, type: .default)
 
@@ -88,7 +88,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 completionHandler(nil)
                 self.writeDebugStatus("tunnel_started: processing packets")
                 #if DEBUG
-                NSLog("[Ring Tunnel] Tunnel started successfully, processing packets")
+                NSLog("[Sentinel Tunnel] Tunnel started successfully, processing packets")
                 #endif
             } catch {
                 self.writeDebugStatus("engine_FAILED: \(error.localizedDescription)")
@@ -504,7 +504,7 @@ class DNSForwarder: NSObject {
 
         #if DEBUG
         if let domain = Self.extractDomainFromDNS(dnsPayload) {
-            NSLog("[Ring DNS] Forwarding txn 0x%04x: %@", txnID, domain)
+            NSLog("[Sentinel DNS] Forwarding txn 0x%04x: %@", txnID, domain)
         }
         #endif
 

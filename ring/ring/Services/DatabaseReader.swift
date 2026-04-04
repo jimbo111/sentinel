@@ -61,7 +61,7 @@ final class DatabaseReader {
 
         guard FileManager.default.fileExists(atPath: path) else {
             if !loggedNotFound {
-                print("[Ring DB] Not found at \(path), waiting for tunnel to create it")
+                print("[Sentinel DB] Not found at \(path), waiting for tunnel to create it")
                 loggedNotFound = true
             }
             db = nil
@@ -79,10 +79,10 @@ final class DatabaseReader {
             db = handle
             sqlite3_busy_timeout(db, 5000)
             self.ensureSentinelTables()
-            print("[Ring DB] Opened successfully at \(path)")
+            print("[Sentinel DB] Opened successfully at \(path)")
         } else {
             let errMsg = String(cString: sqlite3_errmsg(handle))
-            print("[Ring DB] Open FAILED: rc=\(rc) err=\(errMsg)")
+            print("[Sentinel DB] Open FAILED: rc=\(rc) err=\(errMsg)")
             sqlite3_close(handle)
             db = nil
         }
@@ -118,7 +118,7 @@ final class DatabaseReader {
         var errMsg: UnsafeMutablePointer<CChar>?
         sqlite3_exec(db, sql, nil, nil, &errMsg)
         if let errMsg = errMsg {
-            print("[Ring DB] sentinel tables creation note: \(String(cString: errMsg))")
+            print("[Sentinel DB] sentinel tables creation note: \(String(cString: errMsg))")
             sqlite3_free(errMsg)
         }
     }
@@ -133,7 +133,7 @@ final class DatabaseReader {
             guard let db = db else { return }
             sqlite3_exec(db, "DELETE FROM visits", nil, nil, nil)
             sqlite3_exec(db, "DELETE FROM domains", nil, nil, nil)
-            print("[Ring DB] All data truncated")
+            print("[Sentinel DB] All data truncated")
         }
     }
 
@@ -151,11 +151,11 @@ final class DatabaseReader {
             if validateSchema(db) {
                 schemaValid = true
                 schemaRetryCount = 0
-                print("[Ring DB] Schema validated OK")
+                print("[Sentinel DB] Schema validated OK")
             } else {
                 schemaRetryCount += 1
                 if schemaRetryCount <= 3 {
-                    print("[Ring DB] Schema not ready yet (attempt \(schemaRetryCount)), will retry")
+                    print("[Sentinel DB] Schema not ready yet (attempt \(schemaRetryCount)), will retry")
                 }
                 closeDatabase()
                 // Do NOT delete — the extension may still be creating tables

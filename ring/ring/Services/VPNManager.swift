@@ -45,7 +45,7 @@ struct EngineStats: Sendable {
 
 // MARK: - VPNManager
 
-/// Manages the lifecycle of the Ring NETunnelProviderManager and provides a
+/// Manages the lifecycle of the Sentinel NETunnelProviderManager and provides a
 /// high-level async API to the SwiftUI layer.
 ///
 /// All published state is updated on the main actor; the class itself is
