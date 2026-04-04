@@ -5,6 +5,8 @@ struct AllowlistView: View {
     @State private var domains: [String] = []
     @State private var showAddSheet = false
     @State private var newDomain = ""
+    @State private var showValidationError = false
+    @State private var validationErrorMessage = ""
 
     var body: some View {
         Group {
@@ -57,6 +59,11 @@ struct AllowlistView: View {
             Text("Enter a domain to allowlist. Connections to this domain will not be blocked.")
         }
         .onAppear { loadAllowlist() }
+        .alert("Invalid Domain", isPresented: $showValidationError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(validationErrorMessage)
+        }
     }
 
     private var emptyState: some View {
@@ -88,6 +95,26 @@ struct AllowlistView: View {
     private func addDomain() {
         let trimmed = newDomain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !trimmed.isEmpty else { return }
+
+        if trimmed.contains(" ") {
+            validationErrorMessage = "Domain must not contain spaces. Enter a hostname like \"example.com\"."
+            showValidationError = true
+            return
+        }
+
+        if !trimmed.contains(".") {
+            validationErrorMessage = "Enter a valid domain name containing a dot, such as \"example.com\"."
+            showValidationError = true
+            return
+        }
+
+        // Reject labels that start or end with a hyphen, or the domain starts with a dot
+        if trimmed.hasPrefix(".") || trimmed.hasSuffix(".") {
+            validationErrorMessage = "Domain must not start or end with a dot."
+            showValidationError = true
+            return
+        }
+
         DatabaseReader.shared.addToAllowlist(domain: trimmed)
         loadAllowlist()
     }
