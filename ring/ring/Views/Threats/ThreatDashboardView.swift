@@ -36,7 +36,7 @@ struct ThreatDashboardView: View {
                     if viewModel.recentThreats.isEmpty {
                         emptyState
                     } else {
-                        VStack(spacing: 0) {
+                        LazyVStack(spacing: 0) {
                             ForEach(Array(viewModel.recentThreats.enumerated()), id: \.element.id) { index, threat in
                                 if index > 0 {
                                     Divider().padding(.leading, 62)
