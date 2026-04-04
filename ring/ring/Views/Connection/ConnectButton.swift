@@ -54,9 +54,9 @@ struct ConnectButton: View {
         }
         .disabled(isTransitioning)
         .accessibilityLabel(
-            isConnected ? "Disconnect VPN" :
-            isTransitioning ? "VPN connection in progress" :
-            "Connect VPN"
+            isConnected ? "Disable Sentinel protection" :
+            isTransitioning ? "Sentinel connection in progress" :
+            "Enable Sentinel protection"
         )
         .animation(.easeInOut(duration: 0.3), value: status)
     }
