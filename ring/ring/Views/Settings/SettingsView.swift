@@ -103,6 +103,15 @@ struct SettingsView: View {
                         .foregroundColor(.primary)
                         .textCase(nil)
                 }
+
+                // Protection disclaimer
+                Section {
+                    Text("Sentinel blocks known phishing, malware, and tracking domains using threat feeds updated daily. It cannot detect zero-day threats (typical detection lag: 2-7 days), threats delivered through iCloud Private Relay, or URL-path-based attacks. Sentinel is one layer of protection and should not be your sole security measure.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("About Protection")
+                }
             }
             .tint(Theme.accent)
             .navigationTitle("Settings")
