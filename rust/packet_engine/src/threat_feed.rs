@@ -51,6 +51,8 @@ impl ThreatFeed {
     /// ```
     #[must_use]
     pub fn from_hosts_data(data: &str, feed_name: &str) -> Self {
+        const MAX_FEED_DOMAINS: usize = 1_000_000;
+
         // First pass: collect all valid domains so we know the capacity.
         let mut parsed: Vec<String> = Vec::new();
 
@@ -66,6 +68,18 @@ impl ThreatFeed {
             if domain.contains('.') {
                 parsed.push(domain);
             }
+        }
+
+        // Safety limit: prevent a compromised feed from exhausting the 50 MB
+        // jetsam limit by truncating to a maximum domain count.
+        if parsed.len() > MAX_FEED_DOMAINS {
+            log::warn!(
+                "Feed '{}' has {} domains, truncating to {}",
+                feed_name,
+                parsed.len(),
+                MAX_FEED_DOMAINS
+            );
+            parsed.truncate(MAX_FEED_DOMAINS);
         }
 
         // Minimum capacity of 1000 ensures the bloom filter has enough bits
