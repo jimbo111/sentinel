@@ -23,7 +23,6 @@ struct DiagnosticsView: View {
 
     @State private var sendState: SendState = .idle
 
-    private let backendURL = "https://ring-backend-gccf.onrender.com"
     private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     // MARK: - Body
@@ -32,7 +31,6 @@ struct DiagnosticsView: View {
         List {
             systemSection
             collectionStatusSection
-            sendSection
         }
         .navigationTitle("Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
@@ -84,74 +82,6 @@ struct DiagnosticsView: View {
         }
     }
 
-    // MARK: - Send Section
-
-    private var sendSection: some View {
-        Section {
-            sendButton
-        }
-    }
-
-    @ViewBuilder
-    private var sendButton: some View {
-        Button {
-            guard sendState != .sending else { return }
-            Task { await sendDiagnostics() }
-        } label: {
-            HStack {
-                Spacer()
-                sendButtonContent
-                Spacer()
-            }
-            .padding(.vertical, 4)
-        }
-        .disabled(sendState == .sending)
-        .listRowBackground(buttonBackground)
-    }
-
-    @ViewBuilder
-    private var sendButtonContent: some View {
-        switch sendState {
-        case .idle:
-            Label("Send Diagnostics", systemImage: "paperplane.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.white)
-
-        case .sending:
-            HStack(spacing: 8) {
-                ProgressView()
-                    .tint(.white)
-                Text("Sending...")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white)
-            }
-
-        case .success:
-            Label("Sent!", systemImage: "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.white)
-
-        case .failure(let message):
-            VStack(spacing: 2) {
-                Label("Failed to send", systemImage: "exclamationmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white)
-                Text(message)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.85))
-                    .multilineTextAlignment(.center)
-            }
-        }
-    }
-
-    private var buttonBackground: Color {
-        switch sendState {
-        case .idle, .sending: return Theme.accent
-        case .success:        return Theme.connected
-        case .failure:        return Color(.systemRed)
-        }
-    }
-
     // MARK: - Data Loading
 
     private func loadAll() {
@@ -184,77 +114,10 @@ struct DiagnosticsView: View {
         }
     }
 
-    // MARK: - Send Diagnostics
-
-    private func sendDiagnostics() async {
-        sendState = .sending
-
-        let payload = buildPayload()
-
-        guard let url = URL(string: "\(backendURL)/api/diagnostics"),
-              let jsonData = try? JSONSerialization.data(withJSONObject: payload) else {
-            sendState = .failure("Invalid request")
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = jsonData
-        request.timeoutInterval = 15
-
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            if (200...299).contains(statusCode) {
-                sendState = .success
-                // Reset back to idle after showing success briefly
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                sendState = .idle
-            } else {
-                sendState = .failure("Server returned \(statusCode)")
-            }
-        } catch {
-            sendState = .failure(error.localizedDescription)
-        }
-    }
-
     // MARK: - Helpers
 
-    private func buildPayload() -> [String: Any] {
-        var payload: [String: Any] = [
-            "device_id": ConsentService.shared.getOrCreateDeviceId(),
-            "app_version": appVersion,
-            "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
-            "vpn_status": vpnStatus,
-            "db_size": dbFileSize,
-            "tunnel_logs": tunnelStatus,
-            "app_logs": logText
-        ]
-        if let stats = dbStats {
-            payload["total_domains"] = stats.totalDomains
-            payload["total_visits"] = stats.totalVisits
-            payload["domains_today"] = stats.domainsToday
-        }
-        // Parse DNS stats from tunnel logs if available
-        if let dnsLine = tunnelStatus.components(separatedBy: "\n")
-            .last(where: { $0.contains("sent=") }) {
-            let extract = { (key: String) -> Int? in
-                guard let range = dnsLine.range(of: "\(key)=") else { return nil }
-                let after = dnsLine[range.upperBound...]
-                let numStr = after.prefix(while: { $0.isNumber })
-                return Int(numStr)
-            }
-            if let v = extract("sent")    { payload["dns_sent"] = v }
-            if let v = extract("ok")      { payload["dns_ok"] = v }
-            if let v = extract("timeout") { payload["dns_timeout"] = v }
-            if let v = extract("drop")    { payload["dns_dropped"] = v }
-        }
-        return payload
-    }
-
     private func buildCombinedLog() -> String {
-        var log = "=== Ring Diagnostics ===\n"
+        var log = "=== Sentinel Diagnostics ===\n"
         log += "Date: \(Date())\n"
         log += "App: \(appVersion)\n"
         log += "iOS: \(ProcessInfo.processInfo.operatingSystemVersionString)\n"

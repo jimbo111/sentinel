@@ -7,7 +7,6 @@ enum StatsTab: String, CaseIterable {
     case overview = "Overview"
     case rankings = "Rankings"
     case categories = "Categories"
-    case insights = "Insights"
 }
 
 // MARK: - StatsView
@@ -18,10 +17,6 @@ struct StatsView: View {
     @State private var sites: [SiteRecord] = []
     @State private var categories: [CategoriesService.CategoryResult] = []
     @State private var expandedCategory: String?
-    @State private var insightsData: InsightsResponse?
-    @State private var insightsLoading = false
-    @State private var expandedInsight: String?
-    @State private var isOptingIn = false
 
     private let categoryColors: [String: Color] = [
         "social_media": .blue,
@@ -78,8 +73,6 @@ struct StatsView: View {
                             rankingsTab
                         case .categories:
                             categoriesTab
-                        case .insights:
-                            insightsTab
                         }
                     }
                     .background(Theme.pageBackground)
@@ -521,247 +514,6 @@ struct DiagonalStripes: View {
     }
 }
 
-    // MARK: - Insights Tab (Backend-powered)
-
-    private var insightsTab: some View {
-        VStack(spacing: 16) {
-            if insightsLoading && insightsData == nil {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text("Loading from server...")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 300)
-            } else if let data = insightsData, !data.insights.isEmpty {
-                // Source badge
-                HStack {
-                    Image(systemName: "cloud.fill")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
-                    Text("Backend · \(data.totalVisits) visits · \(data.categoryCount) categories")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-
-                ForEach(data.insights) { insight in
-                    let color = categoryColors[insight.category] ?? .gray
-                    let isExpanded = expandedInsight == insight.category
-
-                    VStack(spacing: 0) {
-                        // Category header
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(color)
-                                .frame(width: 10, height: 10)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(insight.label)
-                                    .font(.system(size: 16, weight: .semibold))
-
-                                Text("\(insight.siteCount) sites · \(insight.totalVisits) visits")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer()
-
-                            Text("\(insight.percentage)%")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(color)
-
-                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(14)
-
-                        // Expanded site list
-                        if isExpanded && !insight.sites.isEmpty {
-                            Divider().padding(.horizontal, 14)
-
-                            VStack(spacing: 0) {
-                                ForEach(Array(insight.sites.enumerated()), id: \.element.id) { index, site in
-                                    if index > 0 {
-                                        Divider().padding(.leading, 40)
-                                    }
-
-                                    HStack(spacing: 10) {
-                                        Text("\(index + 1)")
-                                            .font(.caption2.weight(.bold))
-                                            .foregroundColor(.white)
-                                            .frame(width: 20, height: 20)
-                                            .background(color.opacity(0.7))
-                                            .cornerRadius(6)
-
-                                        Text(site.domain)
-                                            .font(.system(size: 13))
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-
-                                        Spacer()
-
-                                        Text("\(site.visits)")
-                                            .font(.system(size: 13, design: .rounded).weight(.medium))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 6)
-                                }
-                            }
-                            .padding(.bottom, 8)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                    }
-                    .cardStyle()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            expandedInsight = isExpanded ? nil : insight.category
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-            } else if !hasTelemetryConsent {
-                // Opt-in CTA for users who haven't enabled telemetry
-                VStack(spacing: 20) {
-                    Spacer().frame(height: 20)
-
-                    Image(systemName: "chart.bar.doc.horizontal.fill")
-                        .font(.system(size: 52))
-                        .foregroundStyle(Theme.accent.gradient)
-                        .symbolEffect(.pulse, options: .repeating.speed(0.5))
-
-                    Text("Unlock Insights")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-
-                    Text("See how your browsing breaks down by category — which sites you visit most, trends over time, and personalized analytics powered by Ring's backend.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        insightsBullet(icon: "chart.pie.fill", color: .purple, text: "Category breakdown of your browsing")
-                        insightsBullet(icon: "trophy.fill", color: .orange, text: "Top sites ranked by visit frequency")
-                        insightsBullet(icon: "lock.shield.fill", color: .green, text: "Anonymous — no browsing history shared")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-
-                    Button {
-                        Task { await enableInsights() }
-                    } label: {
-                        if isOptingIn {
-                            ProgressView()
-                                .tint(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                        } else {
-                            Text("Enable Insights")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                        }
-                    }
-                    .background(Theme.accent.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .padding(.horizontal, 32)
-                    .disabled(isOptingIn)
-                    .sensoryFeedback(.success, trigger: isOptingIn)
-
-                    Spacer().frame(height: 8)
-                }
-                .frame(maxWidth: .infinity, minHeight: 300)
-            } else {
-                // Consent granted but data hasn't synced yet
-                VStack(spacing: 16) {
-                    Image(systemName: "arrow.triangle.2.circlepath.icloud")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.secondary)
-                        .symbolEffect(.rotate, options: .repeating.speed(0.3))
-
-                    Text("Syncing Your Data")
-                        .font(.headline)
-
-                    Text("Your browsing data is being synced to generate insights. This happens automatically when you use Ring. Pull down to refresh.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-
-                    Button("Sync Now") {
-                        Task {
-                            await TelemetryService.shared.syncTelemetry()
-                            await loadInsights(forceRefresh: true)
-                        }
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.accent)
-                }
-                .frame(maxWidth: .infinity, minHeight: 300)
-            }
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 20)
-        .task {
-            await loadInsights()
-        }
-        .refreshable {
-            await loadInsights(forceRefresh: true)
-        }
-    }
-
-    private func loadInsights(forceRefresh: Bool = false) async {
-        insightsLoading = true
-        insightsData = await InsightsService.shared.fetchInsights(forceRefresh: forceRefresh)
-        insightsLoading = false
-    }
-
-    // MARK: - Insights Opt-In
-
-    private var hasTelemetryConsent: Bool {
-        AppGroupConfig.sharedDefaults.bool(forKey: "consent_dns_telemetry")
-    }
-
-    private func enableInsights() async {
-        isOptingIn = true
-
-        // Set consent flags
-        let defaults = AppGroupConfig.sharedDefaults
-        defaults.set(true, forKey: "consent_dns_telemetry")
-        defaults.set(true, forKey: "consent_usage_analytics")
-        defaults.set(true, forKey: "consent_crash_reports")
-
-        // Send consent to backend
-        await ConsentService.shared.sendConsent(
-            dnsTelemetry: true,
-            usageAnalytics: true,
-            crashReports: true
-        )
-
-        // Sync telemetry now that consent is granted
-        await TelemetryService.shared.syncTelemetry()
-
-        // Reload insights
-        await loadInsights(forceRefresh: true)
-        isOptingIn = false
-    }
-
-    private func insightsBullet(icon: String, color: Color, text: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(color)
-                .frame(width: 28, height: 28)
-                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-        }
-    }
 }
 
 // MARK: - Supporting Views
