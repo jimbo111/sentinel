@@ -25,6 +25,9 @@ DerivedData/
 .env
 .env.local
 
+# Protobuf definitions (internal — not for public repo)
+*.proto
+
 # Markdown docs (public repo — keep strategic/internal docs out)
 *.md
 !README.md
