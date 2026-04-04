@@ -29,7 +29,7 @@ struct ConnectionView: View {
             }
             .background(Theme.pageBackground)
             .animation(.easeInOut(duration: 0.4), value: viewModel.status)
-            .navigationTitle("Ring")
+            .navigationTitle("Sentinel")
             .navigationDestination(for: SiteRecord.self) { site in
                 SiteDetailView(site: site)
             }
@@ -73,7 +73,7 @@ struct ConnectionView: View {
                     .foregroundColor(.primary.opacity(0.7))
                     .transition(.opacity)
             } else {
-                Text("Tap to connect")
+                Text("Tap to enable protection")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
