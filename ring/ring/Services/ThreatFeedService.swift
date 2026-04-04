@@ -43,12 +43,19 @@ actor ThreatFeedService {
 
     /// Download all feeds from remote. Returns array of (feedName, data) for loading into the engine.
     /// Falls back to cached data per-feed when a download fails.
+    ///
+    /// NOTE: This runs in the **main app process** (no jetsam limit), NOT the Network Extension.
+    /// The extension only reads cached files from disk via `loadCachedFeeds()`.
+    /// The 50 MB cap below prevents excessive memory use but is not a jetsam concern here.
     func refreshFeeds() async -> [(name: String, data: String)] {
         var results: [(name: String, data: String)] = []
 
         for feed in Self.feeds {
             do {
-                let (data, response) = try await URLSession.shared.data(from: feed.url)
+                var request = URLRequest(url: feed.url)
+                request.timeoutInterval = 30
+
+                let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                     os_log(.error, log: log, "Feed %{public}@ returned non-200 status", feed.name)
                     // Fall back to cache
