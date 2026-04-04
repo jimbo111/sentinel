@@ -108,9 +108,17 @@ struct AllowlistView: View {
             return
         }
 
-        // Reject labels that start or end with a hyphen, or the domain starts with a dot
+        // Reject domains that start or end with a dot, or are just a dot
         if trimmed.hasPrefix(".") || trimmed.hasSuffix(".") {
             validationErrorMessage = "Domain must not start or end with a dot."
+            showValidationError = true
+            return
+        }
+
+        // Each label must have at least one character either side of the dot
+        let labels = trimmed.split(separator: ".", omittingEmptySubsequences: false)
+        if labels.contains(where: { $0.isEmpty }) {
+            validationErrorMessage = "Domain contains an empty label. Enter a valid hostname like \"example.com\"."
             showValidationError = true
             return
         }
