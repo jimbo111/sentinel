@@ -16,7 +16,13 @@ struct ThreatDashboardView: View {
                     HStack(spacing: 12) {
                         statCard(title: "Today", value: "\(viewModel.blockedToday)", icon: "shield.checkered", color: Theme.threatRed)
                         statCard(title: "Feeds", value: "\(viewModel.feedsLoaded)", icon: "antenna.radiowaves.left.and.right", color: Theme.accent)
-                        statCard(title: "Protected", value: viewModel.feedDomainCount, icon: "lock.shield", color: Theme.connected)
+                        statCard(
+                            title: "Protected",
+                            value: viewModel.isLoadingFeeds ? "..." : viewModel.feedDomainCount,
+                            icon: "lock.shield",
+                            color: Theme.connected,
+                            isLoading: viewModel.isLoadingFeeds
+                        )
                     }
 
                     // Threat type breakdown (if data exists)
@@ -69,18 +75,36 @@ struct ThreatDashboardView: View {
 
     // MARK: - Stat Card
 
-    private func statCard(title: String, value: String, icon: String, color: Color) -> some View {
+    private func statCard(
+        title: String,
+        value: String,
+        icon: String,
+        color: Color,
+        isLoading: Bool = false
+    ) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundColor(color)
 
-            Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+            if isLoading {
+                Text(value)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(value)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+            }
 
-            Text(title)
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
+            if isLoading {
+                Text("Downloading...")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            } else {
+                Text(title)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
