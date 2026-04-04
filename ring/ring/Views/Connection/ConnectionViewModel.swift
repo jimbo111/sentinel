@@ -95,9 +95,9 @@ class ConnectionViewModel: ObservableObject {
 
             #if DEBUG
             if let s = result {
-                print("[Ring Stats] pkts=\(s.packetsProcessed) dns=\(s.dnsDomainsFound) sni=\(s.sniDomainsFound) skip=\(s.packetsSkipped)")
+                print("[Sentinel Stats] pkts=\(s.packetsProcessed) dns=\(s.dnsDomainsFound) sni=\(s.sniDomainsFound) skip=\(s.packetsSkipped)")
             } else {
-                print("[Ring Stats] requestStats returned nil")
+                print("[Sentinel Stats] requestStats returned nil")
             }
             #endif
         }
