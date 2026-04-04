@@ -41,8 +41,8 @@ Feeds are downloaded by the app, cached locally, and loaded into the Network Ext
 ## Project structure
 
 ```
-ring/                              iOS app (Xcode project)
-  ring/                            Main app target (SwiftUI)
+sentinel/                           iOS app (Xcode project)
+  sentinel/                        Main app target (SwiftUI)
     Views/
       Threats/                     Security dashboard, threat detail, allowlist
       Connection/                  VPN toggle and status
@@ -104,7 +104,7 @@ This compiles `libpacket_engine.a` for both device and simulator, generates the 
 ### 3. Open in Xcode
 
 ```bash
-open ring/ring.xcodeproj
+open sentinel/sentinel.xcodeproj
 ```
 
 Select your development team in Signing & Capabilities for all targets:

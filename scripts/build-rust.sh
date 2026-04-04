@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 RUST_DIR="$PROJECT_ROOT/rust/packet_engine"
-FRAMEWORKS_DIR="$PROJECT_ROOT/ring/Frameworks"
-BRIDGE_DIR="$PROJECT_ROOT/ring/PacketTunnelExtension/Bridge"
+FRAMEWORKS_DIR="$PROJECT_ROOT/sentinel/Frameworks"
+BRIDGE_DIR="$PROJECT_ROOT/sentinel/PacketTunnelExtension/Bridge"
 
 TARGET="${1:-aarch64-apple-ios}"
 

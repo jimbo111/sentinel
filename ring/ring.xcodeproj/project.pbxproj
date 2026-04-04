@@ -80,29 +80,9 @@
 		C9RINGX0800000000F31001 /* PacketTunnelExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PacketTunnelExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C9C869202F6EEE0500D0BBAE /* Exceptions for "RingWidgets" folder in "RingWidgetsExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */;
-		};
-		C9C869252F6EEF1300D0BBAE /* Exceptions for "ring" folder in "RingWidgetsExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				LiveActivity/RingActivityAttributes.swift,
-			);
-			target = C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C9AE9B182F6C5AE9007F3100 /* ring */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C9C869252F6EEF1300D0BBAE /* Exceptions for "ring" folder in "RingWidgetsExtension" target */,
-			);
 			path = ring;
 			sourceTree = "<group>";
 		};
@@ -118,9 +98,6 @@
 		};
 		C9C8690D2F6EEE0400D0BBAE /* RingWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C9C869202F6EEE0500D0BBAE /* Exceptions for "RingWidgets" folder in "RingWidgetsExtension" target */,
-			);
 			path = RingWidgets;
 			sourceTree = "<group>";
 		};
