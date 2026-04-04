@@ -6,4 +6,4 @@ tab_width = 4
 style = "Both"
 
 [export]
-include = ["EngineStatsFFI"]
+include = ["EngineStatsFFI", "ThreatStatsFFI"]
