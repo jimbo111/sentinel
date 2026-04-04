@@ -11,6 +11,7 @@ struct ThreatDashboardView: View {
                 VStack(spacing: 16) {
                     // Hero card: total threats blocked
                     ThreatCountCard(count: viewModel.totalBlocked, period: "All Time")
+                        .redacted(reason: viewModel.isInitialLoad ? .placeholder : [])
 
                     // Today's stats row
                     HStack(spacing: 12) {
@@ -24,6 +25,7 @@ struct ThreatDashboardView: View {
                             isLoading: viewModel.isLoadingFeeds
                         )
                     }
+                    .redacted(reason: viewModel.isInitialLoad ? .placeholder : [])
 
                     // Threat type breakdown (if data exists)
                     if !viewModel.threatsByType.isEmpty {

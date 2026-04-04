@@ -13,6 +13,8 @@ final class ThreatDashboardViewModel: ObservableObject {
     /// True while the threat-feed domain count has never been loaded (i.e. still 0
     /// because UserDefaults hasn't been written by the extension yet).
     @Published var isLoadingFeeds: Bool = true
+    /// True before the very first refresh() completes. Used to show shimmer placeholders.
+    @Published var isInitialLoad: Bool = true
     @Published var recentThreats: [ThreatRecord] = []
     @Published var threatsByType: [(type: String, count: Int)] = []
 
@@ -46,6 +48,7 @@ final class ThreatDashboardViewModel: ObservableObject {
         feedsLoaded = storedFeedsLoaded > 0 ? storedFeedsLoaded : ThreatFeedService.feeds.count
         feedDomainCount = Self.formatCompact(storedFeedDomainCount)
         isLoadingFeeds = storedFeedDomainCount == 0
+        isInitialLoad = false
     }
 
     /// Formats a number compactly: 1234 -> "1.2K", 1234567 -> "1.2M"
