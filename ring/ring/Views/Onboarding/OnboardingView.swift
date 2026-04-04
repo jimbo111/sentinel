@@ -8,19 +8,19 @@ struct OnboardingView: View {
 
     private let steps: [(icon: String, title: String, description: String)] = [
         (
-            "eye.circle.fill",
-            "See Your Digital Footprint",
-            "Ring silently observes every domain your device connects to — giving you full visibility into your network activity. Domain names are stored only on your device."
+            "shield.checkered",
+            "Block Phishing & Malware",
+            "Sentinel protects you from phishing and malware by blocking threats at the DNS level. Dangerous domains are stopped before they can reach your device."
         ),
         (
             "lock.shield.fill",
             "100% On-Device",
-            "All data is stored locally. No cloud servers, no tracking, no third-party analytics. Your browsing history stays yours."
+            "All threat detection runs locally using curated blocklists. No cloud servers, no tracking, no third-party analytics. Your browsing data never leaves your device."
         ),
         (
             "network.badge.shield.half.filled",
             "VPN Permission",
-            "Ring uses a local VPN to inspect DNS headers. DNS queries are forwarded to a public resolver (Google DNS) for normal resolution — Ring only records which domains were queried."
+            "Sentinel uses a local VPN to inspect DNS queries and block malicious domains. DNS queries are forwarded to a public resolver for normal resolution — Sentinel only intercepts threats."
         ),
     ]
 
@@ -70,7 +70,7 @@ struct OnboardingView: View {
 
             // CTA button
             Button(action: advanceStep) {
-                Text(currentStep == steps.count - 1 ? "Enable Ring" : "Next")
+                Text(currentStep == steps.count - 1 ? "Enable Sentinel" : "Next")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -86,7 +86,7 @@ struct OnboardingView: View {
         .alert("VPN Permission Required", isPresented: $showPermissionError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Ring needs VPN permission to observe network traffic on-device. Please tap \"Enable Ring\" and grant the VPN permission when prompted.")
+            Text("Sentinel needs VPN permission to block threats on-device. Please tap \"Enable Sentinel\" and grant the VPN permission when prompted.")
         }
     }
 
