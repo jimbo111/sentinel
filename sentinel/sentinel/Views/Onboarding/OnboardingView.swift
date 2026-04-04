@@ -81,7 +81,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 32)
             .padding(.bottom, 48)
         }
-        .background(Theme.lavender.opacity(0.15).ignoresSafeArea())
+        .background(Theme.blue.opacity(0.08).ignoresSafeArea())
         .animation(.easeInOut(duration: 0.3), value: currentStep)
         .alert("VPN Permission Required", isPresented: $showPermissionError) {
             Button("OK", role: .cancel) {}
