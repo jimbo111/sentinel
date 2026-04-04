@@ -18,18 +18,6 @@ struct SettingsView: View {
                         .textCase(nil)
                 }
 
-                // Notifications
-                Section {
-                    Toggle("Shopping Deal Alerts", isOn: $viewModel.settings.showShoppingNotifications)
-                } header: {
-                    Text("Notifications")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
-                } footer: {
-                    Text("Get notified when you visit a shopping site with potential deals.")
-                }
-
                 // Filtering
                 Section {
                     Toggle("Filter Noise Domains", isOn: $viewModel.settings.filterNoise)
@@ -99,7 +87,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Link(destination: URL(string: "https://ring.jimmykim.com/privacy")!) {
+                    Link(destination: URL(string: "https://sentinel.jimmykim.com/privacy")!) {
                         HStack {
                             Text("Privacy Policy")
                             Spacer()
