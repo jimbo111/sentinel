@@ -44,7 +44,7 @@ class SettingsViewModel: ObservableObject {
             }
 
             // Use a unique filename to avoid collisions with prior exports
-            let filename = "ring_domains_\(UUID().uuidString).csv"
+            let filename = "sentinel_domains_\(UUID().uuidString).csv"
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
 
             do {
