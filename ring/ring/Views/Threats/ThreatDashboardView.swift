@@ -109,9 +109,9 @@ struct ThreatDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(color.opacity(0.08))
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(color.opacity(0.15), lineWidth: 1)
         )
     }

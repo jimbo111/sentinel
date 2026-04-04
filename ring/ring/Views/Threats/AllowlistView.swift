@@ -21,7 +21,7 @@ struct AllowlistView: View {
                                 .foregroundStyle(Theme.connected)
                                 .frame(width: 28, height: 28)
                                 .background(Theme.connected.opacity(0.1))
-                                .cornerRadius(8)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                             Text(domain)
                                 .font(.system(size: 15, weight: .medium))

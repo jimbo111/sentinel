@@ -64,7 +64,7 @@ struct ThreatDetailView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(Theme.connected.opacity(0.1))
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else {
                         Button {
                             showAllowlistConfirm = true
