@@ -7,9 +7,6 @@ class UserSettings: ObservableObject {
     @Published var autoConnect: Bool {
         didSet { defaults.set(autoConnect, forKey: "autoConnect") }
     }
-    @Published var showShoppingNotifications: Bool {
-        didSet { defaults.set(showShoppingNotifications, forKey: "showShoppingNotifications") }
-    }
     @Published var filterNoise: Bool {
         didSet { defaults.set(filterNoise, forKey: "filterNoise") }
     }
@@ -21,7 +18,6 @@ class UserSettings: ObservableObject {
         let defaults = AppGroupConfig.sharedDefaults
         self.defaults = defaults
         self.autoConnect = defaults.bool(forKey: "autoConnect")
-        self.showShoppingNotifications = defaults.object(forKey: "showShoppingNotifications") as? Bool ?? true
         self.filterNoise = defaults.object(forKey: "filterNoise") as? Bool ?? true
         self.retentionDays = defaults.object(forKey: "retentionDays") as? Int ?? 30
     }
