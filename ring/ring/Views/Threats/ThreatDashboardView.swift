@@ -59,6 +59,7 @@ struct ThreatDashboardView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: AllowlistView()) {
                         Image(systemName: "checklist")
+                            .accessibilityLabel("Manage Allowlist")
                     }
                 }
             }
@@ -86,6 +87,7 @@ struct ThreatDashboardView: View {
             Image(systemName: icon)
                 .font(.caption)
                 .foregroundColor(color)
+                .accessibilityHidden(true)
 
             if isLoading {
                 Text(value)
@@ -114,6 +116,7 @@ struct ThreatDashboardView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(color.opacity(0.15), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Threat Breakdown
@@ -138,6 +141,7 @@ struct ThreatDashboardView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(record.threatColor)
                         .frame(width: 24)
+                        .accessibilityLabel("\(record.threatTypeDisplay) threat type")
 
                     Text(record.threatTypeDisplay)
                         .font(.system(size: 13, weight: .medium))

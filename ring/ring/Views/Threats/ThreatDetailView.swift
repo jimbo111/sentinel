@@ -21,7 +21,9 @@ struct ThreatDetailView: View {
                         Image(systemName: threat.threatIcon)
                             .font(.system(size: 36, weight: .semibold))
                             .foregroundStyle(threat.threatColor)
+                            .accessibilityHidden(true)
                     }
+                    .accessibilityLabel("\(threat.threatTypeDisplay) threat icon")
 
                     Text(threat.threatTypeDisplay)
                         .font(.system(size: 20, weight: .bold))

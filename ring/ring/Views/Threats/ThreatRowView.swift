@@ -21,7 +21,9 @@ struct ThreatRowView: View {
                 Image(systemName: threat.threatIcon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
+                    .accessibilityHidden(true)
             }
+            .accessibilityLabel("\(threat.threatTypeDisplay) threat")
 
             // Domain + metadata
             VStack(alignment: .leading, spacing: 4) {
