@@ -205,6 +205,11 @@ impl PacketEngine {
                     if let Some(threat) = matcher.check_domain(&record.domain) {
                         should_block = true;
                         // Dedup: only record one alert per domain per session.
+                        // Cap at 10K entries to prevent unbounded memory growth
+                        // during long-running sessions.
+                        if self.alerted_domains.len() >= 10_000 {
+                            self.alerted_domains.clear();
+                        }
                         if self.alerted_domains.insert(threat.domain.clone()) {
                             self.pending_alerts.push(threat);
                         }

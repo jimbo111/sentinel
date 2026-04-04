@@ -75,6 +75,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 // Load cached threat feeds from App Group container.
                 self.loadCachedThreatFeeds(engine: engine)
 
+                // Persist feed stats to UserDefaults so the main app's
+                // dashboard can display them without FFI access.
+                let stats = engine.getThreatStats()
+                AppGroupConfig.sharedDefaults.set(Int(stats.feedsLoaded), forKey: "sentinel_feeds_loaded")
+                AppGroupConfig.sharedDefaults.set(Int(stats.feedDomainCount), forKey: "sentinel_feed_domain_count")
+
                 // Sync allowlist from UserDefaults into the Rust engine.
                 self.syncAllowlist(engine: engine)
 
