@@ -87,12 +87,14 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Link(destination: URL(string: "https://sentinel.jimmykim.com/privacy")!) {
-                        HStack {
-                            Text("Privacy Policy")
-                            Spacer()
-                            Image(systemName: "arrow.up.right.square")
-                                .foregroundColor(.secondary)
+                    if let privacyURL = URL(string: "https://sentinel.jimmykim.com/privacy") {
+                        Link(destination: privacyURL) {
+                            HStack {
+                                Text("Privacy Policy")
+                                Spacer()
+                                Image(systemName: "arrow.up.right.square")
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 } header: {
