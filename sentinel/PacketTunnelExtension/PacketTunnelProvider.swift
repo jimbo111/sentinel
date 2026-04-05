@@ -72,6 +72,10 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 let filterNoise = AppGroupConfig.sharedDefaults.object(forKey: "filterNoise") as? Bool ?? true
                 engine.setNoiseFilter(enabled: filterNoise)
 
+                // Set protection level from user settings.
+                let level = AppGroupConfig.sharedDefaults.object(forKey: "protectionLevel") as? Int ?? 1
+                engine.setProtectionLevel(level)
+
                 // Load cached threat feeds from App Group container.
                 self.loadCachedThreatFeeds(engine: engine)
 
@@ -205,6 +209,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             if messageData.count >= 2 {
                 let engine = queue.sync { rustEngine }
                 engineQueue.sync { engine?.setNoiseFilter(enabled: messageData[1] == 0x01) }
+            }
+            completionHandler?(Data([0x00]))
+        case 0x05:
+            // Set protection level (0=relaxed, 1=balanced, 2=strict)
+            if messageData.count >= 2 {
+                let level = Int(messageData[1])
+                let engine = queue.sync { rustEngine }
+                engineQueue.sync { engine?.setProtectionLevel(level) }
+                writeDebugStatus("protection_level_changed: \(level)")
             }
             completionHandler?(Data([0x00]))
         default:

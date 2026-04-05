@@ -119,9 +119,37 @@ struct ThreatDashboardView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
+
+            // Protection level badge
+            protectionLevelBadge
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+    }
+
+    // MARK: - Protection Level Badge
+
+    private var protectionLevelBadge: some View {
+        let level = AppGroupConfig.sharedDefaults.object(forKey: "protectionLevel") as? Int ?? 1
+        let (name, icon, color): (String, String, Color) = {
+            switch level {
+            case 0: return ("Relaxed", "shield", Theme.connected)
+            case 2: return ("Strict", "shield.fill", Theme.threatRed)
+            default: return ("Balanced", "shield.lefthalf.filled", Theme.accent)
+            }
+        }()
+
+        return HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+            Text(name)
+                .font(.system(size: 12, weight: .semibold))
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .background(color.opacity(0.1))
+        .clipShape(Capsule())
     }
 
     // MARK: - Live Metrics

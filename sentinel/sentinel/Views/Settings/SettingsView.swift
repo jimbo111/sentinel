@@ -18,6 +18,16 @@ struct SettingsView: View {
                         .textCase(nil)
                 }
 
+                // Protection Level
+                Section {
+                    protectionLevelPicker
+                } header: {
+                    Text("Protection Level")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.primary)
+                        .textCase(nil)
+                }
+
                 // Filtering
                 Section {
                     Toggle("Filter Noise Domains", isOn: $viewModel.settings.filterNoise)
@@ -142,6 +152,87 @@ struct SettingsView: View {
             } message: {
                 Text(viewModel.exportError ?? "")
             }
+        }
+    }
+}
+
+// MARK: - Protection Level Picker
+
+extension SettingsView {
+    var protectionLevelPicker: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(0..<3, id: \.self) { level in
+                    let isSelected = viewModel.settings.protectionLevel == level
+                    Button {
+                        withAnimation(.spring(response: 0.3)) {
+                            viewModel.settings.protectionLevel = level
+                            viewModel.syncProtectionLevel(level: level)
+                        }
+                    } label: {
+                        VStack(spacing: 6) {
+                            Image(systemName: levelIcon(level))
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundStyle(isSelected ? .white : levelColor(level))
+                                .frame(width: 40, height: 40)
+                                .background(isSelected ? levelColor(level) : levelColor(level).opacity(0.1))
+                                .clipShape(Circle())
+
+                            Text(levelName(level))
+                                .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                                .foregroundStyle(isSelected ? levelColor(level) : .secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Description for selected level
+            Text(levelDescription(viewModel.settings.protectionLevel))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .animation(.none, value: viewModel.settings.protectionLevel)
+        }
+    }
+
+    private func levelIcon(_ level: Int) -> String {
+        switch level {
+        case 0: return "shield"
+        case 1: return "shield.lefthalf.filled"
+        case 2: return "shield.fill"
+        default: return "shield.lefthalf.filled"
+        }
+    }
+
+    private func levelName(_ level: Int) -> String {
+        switch level {
+        case 0: return "Relaxed"
+        case 1: return "Balanced"
+        case 2: return "Strict"
+        default: return "Balanced"
+        }
+    }
+
+    private func levelColor(_ level: Int) -> Color {
+        switch level {
+        case 0: return Theme.connected
+        case 1: return Theme.accent
+        case 2: return Theme.threatRed
+        default: return Theme.accent
+        }
+    }
+
+    private func levelDescription(_ level: Int) -> String {
+        switch level {
+        case 0: return "Blocks only confirmed malware, phishing, and C2 servers. Fewest false positives."
+        case 1: return "Blocks all known threats from feed matches. Good balance of protection and accuracy."
+        case 2: return "Blocks all threats including subdomain matches. Maximum protection, more false positives."
+        default: return ""
         }
     }
 }

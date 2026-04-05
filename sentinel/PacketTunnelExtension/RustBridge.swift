@@ -162,6 +162,12 @@ final class RustPacketEngine {
         packet_engine_set_ech_downgrade(handle, enabled)
     }
 
+    /// Sets the protection level: 0 = relaxed, 1 = balanced, 2 = strict.
+    func setProtectionLevel(_ level: Int) {
+        guard let handle = self.handle else { return }
+        packet_engine_set_protection_level(handle, UInt8(min(max(level, 0), 2)))
+    }
+
     /// Returns a snapshot of the engine's internal counters.
     func getStats() -> Stats {
         guard let handle = self.handle else {

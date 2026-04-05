@@ -76,6 +76,13 @@ class SettingsViewModel: ObservableObject {
         }
     }
 
+    /// Push the protection level to the running tunnel extension via IPC.
+    func syncProtectionLevel(level: Int) {
+        Task {
+            _ = await VPNManager.shared.sendMessage(Data([0x05, UInt8(min(max(level, 0), 2))]))
+        }
+    }
+
     func clearAllData() {
         // Truncate tables via SQL instead of deleting the file.
         // The Rust engine in the extension may have the DB open; deleting
