@@ -1,5 +1,4 @@
 import SwiftUI
-import NetworkExtension
 
 struct MainTabView: View {
     @EnvironmentObject var vpnManager: VPNManager
