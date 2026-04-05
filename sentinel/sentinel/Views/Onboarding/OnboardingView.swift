@@ -76,7 +76,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Theme.accent)
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .padding(.horizontal, 32)
             .padding(.bottom, 48)

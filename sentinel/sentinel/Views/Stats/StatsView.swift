@@ -168,9 +168,9 @@ struct StatsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(color.opacity(0.08))
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(color.opacity(0.15), lineWidth: 1)
         )
     }
@@ -255,7 +255,7 @@ struct StatsView: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 3)
                                     .background(color.opacity(0.1))
-                                    .cornerRadius(6)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             }
 
                             Text("\(site.domainCount) domain\(site.domainCount == 1 ? "" : "s")")
@@ -409,7 +409,7 @@ struct StatsView: View {
                                                 .foregroundColor(color)
                                                 .frame(width: 28, height: 28)
                                                 .background(color.opacity(0.08))
-                                                .cornerRadius(8)
+                                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                                             Text(site.siteDomain)
                                                 .font(.system(size: 14))

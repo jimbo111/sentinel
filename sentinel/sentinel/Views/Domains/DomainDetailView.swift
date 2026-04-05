@@ -82,7 +82,7 @@ struct DomainDetailView: View {
                                     .foregroundColor(Theme.accent)
                                     .frame(width: 40, height: 40)
                                     .background(Theme.accent.opacity(0.1))
-                                    .cornerRadius(12)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                                 Text(entry.ip)
                                     .font(.subheadline.monospacedDigit())
@@ -120,7 +120,7 @@ struct DomainDetailView: View {
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
                                     .background(Color(.systemGray5))
-                                    .cornerRadius(10)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             }
 
                             if index < queryTypes.count - 1 {
@@ -156,7 +156,7 @@ struct DomainDetailView: View {
                                     .foregroundColor(.secondary)
                                     .frame(width: 40, height: 40)
                                     .background(Color(.systemGray6))
-                                    .cornerRadius(12)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(formattedDate(visit.date))

@@ -64,7 +64,7 @@ struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(Theme.cardBackground)
-            .cornerRadius(Theme.cardRadius)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
             .shadow(color: Theme.cardShadow, radius: 8, y: 2)
     }
 }
