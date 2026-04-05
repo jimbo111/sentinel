@@ -2,12 +2,12 @@
 rust/packet_engine/target/
 
 # Compiled libraries (rebuilt from source via ./scripts/build-universal.sh)
-ring/Frameworks/*.a
-ring/Frameworks/ios-arm64/
-ring/Frameworks/ios-arm64-simulator/
+sentinel/Frameworks/*.a
+sentinel/Frameworks/ios-arm64/
+sentinel/Frameworks/ios-arm64-simulator/
 
 # Generated header (rebuilt from source)
-ring/PacketTunnelExtension/Bridge/packet_engine.h
+sentinel/PacketTunnelExtension/Bridge/packet_engine.h
 
 # Xcode
 *.xcuserdata
