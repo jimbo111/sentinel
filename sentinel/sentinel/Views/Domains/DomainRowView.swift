@@ -27,6 +27,7 @@ struct DomainRowView: View {
                 Image(systemName: "globe")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
+                    .accessibilityHidden(true)
             }
 
             // Center: domain name + metadata row
