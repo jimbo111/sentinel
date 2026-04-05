@@ -18,30 +18,6 @@ struct StatsView: View {
     @State private var categories: [CategoriesService.CategoryResult] = []
     @State private var expandedCategory: String?
 
-    private let categoryColors: [String: Color] = [
-        "social_media": .blue,
-        "shopping": .orange,
-        "entertainment": .purple,
-        "news": .red,
-        "search": .green,
-        "communication": .teal,
-        "finance": .mint,
-        "productivity": .indigo,
-        "gaming": .pink,
-        "education": .cyan,
-        "food_delivery": .yellow,
-        "health": Color(red: 0.9, green: 0.3, blue: 0.3),
-        "travel": Color(red: 0.2, green: 0.6, blue: 0.9),
-        "technology": .gray,
-        "ai_tools": Color(red: 0.4, green: 0.3, blue: 0.9),
-        "dating": Color(red: 0.95, green: 0.3, blue: 0.5),
-        "sports": Color(red: 0.1, green: 0.7, blue: 0.4),
-        "weather": Color(red: 0.3, green: 0.7, blue: 0.9),
-        "government": Color(red: 0.2, green: 0.4, blue: 0.7),
-        "transportation": Color(red: 0.95, green: 0.6, blue: 0.1),
-        "uncategorized": Color(.systemGray3),
-    ]
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -97,10 +73,7 @@ struct StatsView: View {
     }
 
     private func colorForSite(_ siteDomain: String) -> Color {
-        if let cat = CategoriesService.shared.categorize(siteDomain) {
-            return categoryColors[cat.key] ?? Theme.accent
-        }
-        return Theme.accent
+        Theme.colorForDomain(siteDomain)
     }
 
     // MARK: - Overview Tab
@@ -128,7 +101,7 @@ struct StatsView: View {
                     // Top 3 category labels
                     HStack(spacing: 12) {
                         ForEach(categories.prefix(3), id: \.key) { cat in
-                            let color = categoryColors[cat.key] ?? .gray
+                            let color = Theme.categoryColors[cat.key] ?? .gray
                             HStack(spacing: 4) {
                                 Circle()
                                     .fill(color)
@@ -359,7 +332,7 @@ struct StatsView: View {
                     .padding(.horizontal, 16)
 
                 ForEach(categories, id: \.key) { cat in
-                    let color = categoryColors[cat.key] ?? .gray
+                    let color = Theme.categoryColors[cat.key] ?? .gray
                     let percentage = totalVisits > 0
                         ? Int(round(Double(cat.totalVisits) / Double(totalVisits) * 100))
                         : 0
@@ -481,7 +454,7 @@ struct StatsView: View {
                 ForEach(categories, id: \.key) { cat in
                     let share = totalVisits > 0 ? CGFloat(cat.totalVisits) / CGFloat(totalVisits) : 0
                     let width = max(share * availableWidth, 4)
-                    let color = categoryColors[cat.key] ?? .gray
+                    let color = Theme.categoryColors[cat.key] ?? .gray
 
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
