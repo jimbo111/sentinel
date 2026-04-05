@@ -12,20 +12,18 @@ struct SettingsView: View {
                 Section {
                     Toggle("Auto-Connect on Launch", isOn: $viewModel.settings.autoConnect)
                 } header: {
-                    Text("General")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "bolt.shield.fill", title: "General")
+                } footer: {
+                    Text("Starts protection automatically when you open Sentinel. The VPN stays active across sleep and network changes.")
                 }
 
                 // Protection Level
                 Section {
                     protectionLevelPicker
                 } header: {
-                    Text("Protection Level")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "slider.horizontal.3", title: "Protection Level")
+                } footer: {
+                    Text("Controls how aggressively Sentinel blocks domains. Higher levels catch more threats but may flag legitimate sites.")
                 }
 
                 // Filtering
@@ -35,12 +33,9 @@ struct SettingsView: View {
                             viewModel.syncNoiseFilter(enabled: newValue)
                         }
                 } header: {
-                    Text("Filtering")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "line.3.horizontal.decrease", title: "Domain Filtering")
                 } footer: {
-                    Text("Hides common infrastructure domains like CDNs and analytics trackers.")
+                    Text("Hides Apple infrastructure, CDNs, and analytics domains from your domain list. Keeps the view focused on sites you actually visit.")
                 }
 
                 // Data
@@ -68,10 +63,9 @@ struct SettingsView: View {
                         Label("Clear All Data", systemImage: "trash")
                     }
                 } header: {
-                    Text("Data")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "externaldrive.fill", title: "Your Data")
+                } footer: {
+                    Text("All data stays on your phone. Choose how long to keep domain history, export it, or delete everything.")
                 }
 
                 // Diagnostics
@@ -82,10 +76,9 @@ struct SettingsView: View {
                         Label("Diagnostics & Logs", systemImage: "doc.text.magnifyingglass")
                     }
                 } header: {
-                    Text("Debug")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "wrench.and.screwdriver", title: "Debug")
+                } footer: {
+                    Text("View VPN tunnel status, database stats, and engine logs. Useful for troubleshooting.")
                 }
 
                 // About
@@ -108,19 +101,21 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("About")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .textCase(nil)
+                    sectionHeader(icon: "info.circle", title: "About")
+                }
+
+                // How Sentinel works
+                Section {
+                    howItWorksCard
+                } header: {
+                    sectionHeader(icon: "questionmark.circle", title: "How It Works")
                 }
 
                 // Protection disclaimer
                 Section {
-                    Text("Sentinel blocks known phishing, malware, and tracking domains using threat feeds updated daily. It cannot detect zero-day threats (typical detection lag: 2-7 days), threats delivered through iCloud Private Relay, or URL-path-based attacks. Sentinel is one layer of protection and should not be your sole security measure.\n\nThreat detection uses a probabilistic filter with a ~0.1% false positive rate. Legitimate sites may occasionally be flagged — use the allowlist to bypass false positives.")
+                    Text("Sentinel blocks known threats from curated feeds updated daily. It cannot detect zero-day threats (2-7 day lag), iCloud Private Relay traffic, or URL-path attacks. ~0.1% of legitimate sites may be flagged — use the allowlist to bypass false positives.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } header: {
-                    Text("About Protection")
                 }
             }
             .tint(Theme.accent)
@@ -151,6 +146,76 @@ struct SettingsView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.exportError ?? "")
+            }
+        }
+    }
+
+    // MARK: - Section Header
+
+    private func sectionHeader(icon: String, title: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.accent)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.primary)
+        }
+        .textCase(nil)
+    }
+
+    // MARK: - How It Works
+
+    private var howItWorksCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            howItWorksRow(
+                step: "1",
+                icon: "antenna.radiowaves.left.and.right",
+                color: Theme.accent,
+                title: "Intercepts DNS",
+                description: "Every domain your phone contacts passes through Sentinel's local VPN tunnel."
+            )
+            howItWorksRow(
+                step: "2",
+                icon: "shield.checkered",
+                color: Theme.threatOrange,
+                title: "Checks Threat Feeds",
+                description: "Domains are matched against 400K+ known phishing, malware, and tracking domains."
+            )
+            howItWorksRow(
+                step: "3",
+                icon: "xmark.octagon.fill",
+                color: Theme.threatRed,
+                title: "Blocks Threats",
+                description: "Matched domains get a sinkhole response — the connection fails instantly, before any data loads."
+            )
+            howItWorksRow(
+                step: "4",
+                icon: "lock.iphone",
+                color: Theme.connected,
+                title: "Stays On-Device",
+                description: "Everything runs locally. No browsing data is ever sent to a server."
+            )
+        }
+    }
+
+    private func howItWorksRow(step: String, icon: String, color: Color, title: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -189,7 +254,6 @@ extension SettingsView {
                 }
             }
 
-            // Description for selected level
             Text(levelDescription(viewModel.settings.protectionLevel))
                 .font(.caption)
                 .foregroundStyle(.secondary)
