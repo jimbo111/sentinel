@@ -116,23 +116,6 @@ struct DiagnosticsView: View {
 
     // MARK: - Helpers
 
-    private func buildCombinedLog() -> String {
-        var log = "=== Sentinel Diagnostics ===\n"
-        log += "Date: \(Date())\n"
-        log += "App: \(appVersion)\n"
-        log += "iOS: \(ProcessInfo.processInfo.operatingSystemVersionString)\n"
-        log += "VPN: \(vpnStatus)\n"
-        log += "DB: \(dbFileSize)\n"
-        if let s = dbStats {
-            log += "Domains: \(s.totalDomains) | Visits: \(s.totalVisits) | Today: \(s.domainsToday)\n"
-        }
-        log += "\n=== TUNNEL LOGS ===\n"
-        log += tunnelStatus.isEmpty ? "(empty)\n" : tunnelStatus
-        log += "\n=== APP LOGS ===\n"
-        log += logText.isEmpty ? "(empty)\n" : logText
-        return log
-    }
-
     private func infoRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
