@@ -19,6 +19,7 @@ struct SiteDetailView: View {
                         Image(systemName: "globe")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(Theme.accent)
+                            .accessibilityHidden(true)
                     }
 
                     Text(site.siteDomain)

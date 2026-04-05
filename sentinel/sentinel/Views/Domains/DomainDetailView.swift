@@ -21,6 +21,7 @@ struct DomainDetailView: View {
                         Image(systemName: "globe")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundColor(Theme.accent)
+                            .accessibilityHidden(true)
                     }
 
                     Text(domain.domain)
@@ -83,6 +84,7 @@ struct DomainDetailView: View {
                                     .frame(width: 40, height: 40)
                                     .background(Theme.accent.opacity(0.1))
                                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .accessibilityHidden(true)
 
                                 Text(entry.ip)
                                     .font(.subheadline.monospacedDigit())
@@ -157,6 +159,7 @@ struct DomainDetailView: View {
                                     .frame(width: 40, height: 40)
                                     .background(Color(.systemGray6))
                                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .accessibilityHidden(true)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(formattedDate(visit.date))
