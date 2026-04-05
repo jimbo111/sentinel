@@ -39,6 +39,7 @@ struct SiteRowView: View {
                 Image(systemName: iconName)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
+                    .accessibilityHidden(true)
             }
 
             // Center: domain name + metadata row
