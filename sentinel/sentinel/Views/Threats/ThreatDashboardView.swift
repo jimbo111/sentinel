@@ -1,22 +1,30 @@
 import SwiftUI
+import NetworkExtension
 
-/// Main security dashboard showing threat statistics and recent blocked threats.
+/// Main security dashboard — combines VPN control + threat intelligence.
 struct ThreatDashboardView: View {
+    @EnvironmentObject var vpnManager: VPNManager
     @StateObject private var viewModel = ThreatDashboardViewModel()
+    @StateObject private var connectionVM = ConnectionViewModel()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Hero card: total threats blocked
-                    ThreatCountCard(count: viewModel.totalBlocked, period: "All Time")
-                        .redacted(reason: viewModel.isInitialLoad ? .placeholder : [])
+                    // VPN control — shield button + status
+                    vpnSection
 
-                    // Today's stats row
+                    // Live metrics (only when connected)
+                    if connectionVM.status == .connected {
+                        liveMetrics
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+
+                    // Threat stats row
                     HStack(spacing: 12) {
-                        statCard(title: "Today", value: "\(viewModel.blockedToday)", icon: "shield.checkered", color: Theme.threatRed)
-                        statCard(title: "Feeds", value: "\(viewModel.feedsLoaded)", icon: "antenna.radiowaves.left.and.right", color: Theme.accent)
+                        statCard(title: "Blocked", value: "\(viewModel.totalBlocked)", icon: "shield.checkered", color: Theme.threatRed)
+                        statCard(title: "Today", value: "\(viewModel.blockedToday)", icon: "exclamationmark.triangle", color: Theme.threatOrange)
                         statCard(
                             title: "Protected",
                             value: viewModel.isLoadingFeeds ? "..." : viewModel.feedDomainCount,
@@ -27,12 +35,12 @@ struct ThreatDashboardView: View {
                     }
                     .redacted(reason: viewModel.isInitialLoad ? .placeholder : [])
 
-                    // Threat type breakdown (if data exists)
+                    // Threat type breakdown
                     if !viewModel.threatsByType.isEmpty {
                         threatBreakdownCard
                     }
 
-                    // Recent threats list
+                    // Recent threats
                     SectionHeader(title: "Recent Threats", count: viewModel.recentThreats.count)
 
                     if viewModel.recentThreats.isEmpty {
@@ -43,7 +51,6 @@ struct ThreatDashboardView: View {
                                 if index > 0 {
                                     Divider().padding(.leading, 62)
                                 }
-
                                 NavigationLink(destination: ThreatDetailView(threat: threat)) {
                                     ThreatRowView(threat: threat)
                                 }
@@ -56,7 +63,8 @@ struct ThreatDashboardView: View {
                 .padding(16)
             }
             .background(Theme.pageBackground)
-            .navigationTitle("Security")
+            .animation(.easeInOut(duration: 0.4), value: connectionVM.status)
+            .navigationTitle("Sentinel")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: AllowlistView()) {
@@ -73,7 +81,75 @@ struct ThreatDashboardView: View {
                     viewModel.refresh()
                 }
             }
+            .alert("Connection Error", isPresented: Binding(
+                get: { connectionVM.connectionError != nil },
+                set: { if !$0 { connectionVM.connectionError = nil } }
+            )) {
+                Button("OK", role: .cancel) { connectionVM.connectionError = nil }
+            } message: {
+                Text(connectionVM.connectionError ?? "")
+            }
         }
+    }
+
+    // MARK: - VPN Control Section
+
+    private var vpnSection: some View {
+        VStack(spacing: 12) {
+            // Status label
+            Text(statusText)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(statusColor)
+                .textCase(.uppercase)
+                .tracking(1.5)
+
+            // Shield button
+            ConnectButton(status: connectionVM.status) {
+                connectionVM.toggleConnection()
+            }
+
+            // Duration or hint
+            if connectionVM.status == .connected {
+                Text(connectionVM.formattedDuration)
+                    .font(.system(size: 28, weight: .light, design: .monospaced))
+                    .foregroundColor(.primary.opacity(0.6))
+                    .transition(.opacity)
+            } else {
+                Text("Tap to enable protection")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - Live Metrics
+
+    private var liveMetrics: some View {
+        HStack(spacing: 10) {
+            metricChip(value: connectionVM.formattedDomainsToday, label: "domains", color: Theme.accent)
+            metricChip(value: connectionVM.formattedPacketsScanned, label: "packets", color: Theme.green)
+            metricChip(value: connectionVM.formattedDNSQueries, label: "queries", color: Theme.yellow)
+        }
+    }
+
+    private func metricChip(value: String, label: String, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Text(value)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+            Text(label)
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(color.opacity(0.12), lineWidth: 1)
+        )
     }
 
     // MARK: - Stat Card
@@ -100,15 +176,9 @@ struct ThreatDashboardView: View {
                     .font(.system(size: 22, weight: .bold, design: .rounded))
             }
 
-            if isLoading {
-                Text("Downloading...")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-            } else {
-                Text(title)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
+            Text(isLoading ? "Downloading..." : title)
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
@@ -154,7 +224,6 @@ struct ThreatDashboardView: View {
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(record.threatColor.opacity(0.12))
                                 .frame(height: 6)
-
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(record.threatColor.gradient)
                                 .frame(width: max(geo.size.width * proportion, 4), height: 6)
@@ -192,8 +261,32 @@ struct ThreatDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
     }
+
+    // MARK: - Helpers
+
+    private var statusText: String {
+        switch connectionVM.status {
+        case .connected: return "Protected"
+        case .connecting: return "Connecting"
+        case .disconnecting: return "Disconnecting"
+        case .reasserting: return "Reconnecting"
+        case .disconnected: return "Disconnected"
+        case .invalid: return "Not Configured"
+        @unknown default: return "Unknown"
+        }
+    }
+
+    private var statusColor: Color {
+        switch connectionVM.status {
+        case .connected: return Theme.connected
+        case .connecting, .disconnecting, .reasserting: return Theme.transitioning
+        case .disconnected, .invalid: return Theme.accent.opacity(0.4)
+        @unknown default: return Theme.accent.opacity(0.4)
+        }
+    }
 }
 
 #Preview {
     ThreatDashboardView()
+        .environmentObject(VPNManager.shared)
 }

@@ -11,11 +11,6 @@ struct MainTabView: View {
                     Label("Security", systemImage: "shield.lefthalf.filled")
                 }
 
-            ConnectionView()
-                .tabItem {
-                    Label("Connection", systemImage: "network")
-                }
-
             DomainListView()
                 .tabItem {
                     Label("Domains", systemImage: "list.bullet")

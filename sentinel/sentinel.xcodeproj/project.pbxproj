@@ -81,45 +81,45 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C9C869202F6EEE0500D0BBAE /* Exceptions for "RingWidgets" folder in "RingWidgetsExtension" target */ = {
+		C9C869202F6EEE0500D0BBAE /* Exceptions for "SentinelWidgets" folder in "SentinelWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */;
+			target = C9C869062F6EEE0400D0BBAE /* SentinelWidgetsExtension */;
 		};
-		C9C869252F6EEF1300D0BBAE /* Exceptions for "ring" folder in "RingWidgetsExtension" target */ = {
+		C9C869252F6EEF1300D0BBAE /* Exceptions for "sentinel" folder in "SentinelWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				LiveActivity/RingActivityAttributes.swift,
 			);
-			target = C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */;
+			target = C9C869062F6EEE0400D0BBAE /* SentinelWidgetsExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C9AE9B182F6C5AE9007F3100 /* ring */ = {
+		C9AE9B182F6C5AE9007F3100 /* sentinel */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C9C869252F6EEF1300D0BBAE /* Exceptions for "ring" folder in "RingWidgetsExtension" target */,
+				C9C869252F6EEF1300D0BBAE /* Exceptions for "sentinel" folder in "SentinelWidgetsExtension" target */,
 			);
 			path = sentinel;
 			sourceTree = "<group>";
 		};
-		C9AE9B262F6C5AEA007F3100 /* ringTests */ = {
+		C9AE9B262F6C5AEA007F3100 /* sentinelTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = sentinelTests;
 			sourceTree = "<group>";
 		};
-		C9AE9B302F6C5AEA007F3100 /* ringUITests */ = {
+		C9AE9B302F6C5AEA007F3100 /* sentinelUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = sentinelUITests;
 			sourceTree = "<group>";
 		};
-		C9C8690D2F6EEE0400D0BBAE /* RingWidgets */ = {
+		C9C8690D2F6EEE0400D0BBAE /* SentinelWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C9C869202F6EEE0500D0BBAE /* Exceptions for "RingWidgets" folder in "RingWidgetsExtension" target */,
+				C9C869202F6EEE0500D0BBAE /* Exceptions for "SentinelWidgets" folder in "SentinelWidgetsExtension" target */,
 			);
 			path = SentinelWidgets;
 			sourceTree = "<group>";
@@ -170,12 +170,12 @@
 		C9AE9B0D2F6C5AE9007F3100 = {
 			isa = PBXGroup;
 			children = (
-				C9AE9B182F6C5AE9007F3100 /* ring */,
+				C9AE9B182F6C5AE9007F3100 /* sentinel */,
 				C9RINGX2000000000F31001 /* PacketTunnelExtension */,
 				C9RINGX2200000000F31001 /* Shared */,
-				C9AE9B262F6C5AEA007F3100 /* ringTests */,
-				C9AE9B302F6C5AEA007F3100 /* ringUITests */,
-				C9C8690D2F6EEE0400D0BBAE /* RingWidgets */,
+				C9AE9B262F6C5AEA007F3100 /* sentinelTests */,
+				C9AE9B302F6C5AEA007F3100 /* sentinelUITests */,
+				C9C8690D2F6EEE0400D0BBAE /* SentinelWidgets */,
 				C9C869082F6EEE0400D0BBAE /* Frameworks */,
 				C9AE9B172F6C5AE9007F3100 /* Products */,
 			);
@@ -234,9 +234,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C9AE9B152F6C5AE9007F3100 /* ring */ = {
+		C9AE9B152F6C5AE9007F3100 /* sentinel */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9AE9B372F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ring" */;
+			buildConfigurationList = C9AE9B372F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinel" */;
 			buildPhases = (
 				C9AE9B122F6C5AE9007F3100 /* Sources */,
 				C9AE9B132F6C5AE9007F3100 /* Frameworks */,
@@ -250,7 +250,7 @@
 				C9C8691C2F6EEE0500D0BBAE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C9AE9B182F6C5AE9007F3100 /* ring */,
+				C9AE9B182F6C5AE9007F3100 /* sentinel */,
 			);
 			name = sentinel;
 			packageProductDependencies = (
@@ -259,9 +259,9 @@
 			productReference = C9AE9B162F6C5AE9007F3100 /* sentinel.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C9AE9B222F6C5AEA007F3100 /* ringTests */ = {
+		C9AE9B222F6C5AEA007F3100 /* sentinelTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9AE9B3A2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ringTests" */;
+			buildConfigurationList = C9AE9B3A2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinelTests" */;
 			buildPhases = (
 				C9AE9B1F2F6C5AEA007F3100 /* Sources */,
 				C9AE9B202F6C5AEA007F3100 /* Frameworks */,
@@ -273,7 +273,7 @@
 				C9AE9B252F6C5AEA007F3100 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C9AE9B262F6C5AEA007F3100 /* ringTests */,
+				C9AE9B262F6C5AEA007F3100 /* sentinelTests */,
 			);
 			name = sentinelTests;
 			packageProductDependencies = (
@@ -282,9 +282,9 @@
 			productReference = C9AE9B232F6C5AEA007F3100 /* sentinelTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C9AE9B2C2F6C5AEA007F3100 /* ringUITests */ = {
+		C9AE9B2C2F6C5AEA007F3100 /* sentinelUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9AE9B3D2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ringUITests" */;
+			buildConfigurationList = C9AE9B3D2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinelUITests" */;
 			buildPhases = (
 				C9AE9B292F6C5AEA007F3100 /* Sources */,
 				C9AE9B2A2F6C5AEA007F3100 /* Frameworks */,
@@ -296,7 +296,7 @@
 				C9AE9B2F2F6C5AEA007F3100 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C9AE9B302F6C5AEA007F3100 /* ringUITests */,
+				C9AE9B302F6C5AEA007F3100 /* sentinelUITests */,
 			);
 			name = sentinelUITests;
 			packageProductDependencies = (
@@ -305,9 +305,9 @@
 			productReference = C9AE9B2D2F6C5AEA007F3100 /* sentinelUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */ = {
+		C9C869062F6EEE0400D0BBAE /* SentinelWidgetsExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9C869212F6EEE0500D0BBAE /* Build configuration list for PBXNativeTarget "RingWidgetsExtension" */;
+			buildConfigurationList = C9C869212F6EEE0500D0BBAE /* Build configuration list for PBXNativeTarget "SentinelWidgetsExtension" */;
 			buildPhases = (
 				C9C869032F6EEE0400D0BBAE /* Sources */,
 				C9C869042F6EEE0400D0BBAE /* Frameworks */,
@@ -318,7 +318,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C9C8690D2F6EEE0400D0BBAE /* RingWidgets */,
+				C9C8690D2F6EEE0400D0BBAE /* SentinelWidgets */,
 			);
 			name = SentinelWidgetsExtension;
 			packageProductDependencies = (
@@ -376,7 +376,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C9AE9B112F6C5AE9007F3100 /* Build configuration list for PBXProject "ring" */;
+			buildConfigurationList = C9AE9B112F6C5AE9007F3100 /* Build configuration list for PBXProject "sentinel" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -390,11 +390,11 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C9AE9B152F6C5AE9007F3100 /* ring */,
-				C9AE9B222F6C5AEA007F3100 /* ringTests */,
-				C9AE9B2C2F6C5AEA007F3100 /* ringUITests */,
+				C9AE9B152F6C5AE9007F3100 /* sentinel */,
+				C9AE9B222F6C5AEA007F3100 /* sentinelTests */,
+				C9AE9B2C2F6C5AEA007F3100 /* sentinelUITests */,
 				C9RINGX4000000000F31001 /* PacketTunnelExtension */,
-				C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */,
+				C9C869062F6EEE0400D0BBAE /* SentinelWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -502,17 +502,17 @@
 /* Begin PBXTargetDependency section */
 		C9AE9B252F6C5AEA007F3100 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9AE9B152F6C5AE9007F3100 /* ring */;
+			target = C9AE9B152F6C5AE9007F3100 /* sentinel */;
 			targetProxy = C9AE9B242F6C5AEA007F3100 /* PBXContainerItemProxy */;
 		};
 		C9AE9B2F2F6C5AEA007F3100 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9AE9B152F6C5AE9007F3100 /* ring */;
+			target = C9AE9B152F6C5AE9007F3100 /* sentinel */;
 			targetProxy = C9AE9B2E2F6C5AEA007F3100 /* PBXContainerItemProxy */;
 		};
 		C9C8691C2F6EEE0500D0BBAE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9C869062F6EEE0400D0BBAE /* RingWidgetsExtension */;
+			target = C9C869062F6EEE0400D0BBAE /* SentinelWidgetsExtension */;
 			targetProxy = C9C8691B2F6EEE0500D0BBAE /* PBXContainerItemProxy */;
 		};
 		C9RINGX6100000000F31001 /* PBXTargetDependency */ = {
@@ -939,7 +939,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C9AE9B112F6C5AE9007F3100 /* Build configuration list for PBXProject "ring" */ = {
+		C9AE9B112F6C5AE9007F3100 /* Build configuration list for PBXProject "sentinel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9AE9B352F6C5AEA007F3100 /* Debug */,
@@ -948,7 +948,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9AE9B372F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ring" */ = {
+		C9AE9B372F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9AE9B382F6C5AEA007F3100 /* Debug */,
@@ -957,7 +957,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9AE9B3A2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ringTests" */ = {
+		C9AE9B3A2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinelTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9AE9B3B2F6C5AEA007F3100 /* Debug */,
@@ -966,7 +966,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9AE9B3D2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "ringUITests" */ = {
+		C9AE9B3D2F6C5AEA007F3100 /* Build configuration list for PBXNativeTarget "sentinelUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9AE9B3E2F6C5AEA007F3100 /* Debug */,
@@ -975,7 +975,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9C869212F6EEE0500D0BBAE /* Build configuration list for PBXNativeTarget "RingWidgetsExtension" */ = {
+		C9C869212F6EEE0500D0BBAE /* Build configuration list for PBXNativeTarget "SentinelWidgetsExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9C8691E2F6EEE0500D0BBAE /* Debug */,
