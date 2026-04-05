@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import UniformTypeIdentifiers
 
 class SettingsViewModel: ObservableObject {
     @Published var settings: UserSettings
