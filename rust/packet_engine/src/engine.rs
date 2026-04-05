@@ -16,7 +16,7 @@ use crate::domain::{DomainRecord, DetectionSource};
 use crate::storage::DomainStorage;
 use crate::errors::EngineError;
 use crate::constants::*;
-use crate::threat_matcher::{ThreatMatch, ThreatMatcher};
+use crate::threat_matcher::{ThreatMatch, ThreatMatcher, ThreatType};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Result of processing a packet.
@@ -60,6 +60,9 @@ pub struct PacketEngine {
     /// Domains that have already produced an alert in this session.
     /// Prevents duplicate alerts for the same domain queried repeatedly.
     alerted_domains: HashSet<String>,
+    /// Protection level: 0 = relaxed, 1 = balanced (default), 2 = strict.
+    /// Controls which threat matches produce a Block vs just a logged alert.
+    pub protection_level: u8,
 }
 
 /// Aggregate statistics for threat detection.
@@ -110,6 +113,7 @@ impl PacketEngine {
             threat_matcher: None,
             pending_alerts: Vec::new(),
             alerted_domains: HashSet::new(),
+            protection_level: 1, // balanced
         })
     }
 
@@ -203,10 +207,30 @@ impl PacketEngine {
                 // Threat check before buffering the domain.
                 if let Some(ref mut matcher) = self.threat_matcher {
                     if let Some(threat) = matcher.check_domain(&record.domain) {
-                        should_block = true;
-                        // Dedup: only record one alert per domain per session.
-                        // Cap at 10K entries to prevent unbounded memory growth
-                        // during long-running sessions.
+                        // Protection level determines block vs log-only:
+                        // 0 (relaxed): block only high-confidence malware/phishing/C2
+                        // 1 (balanced): block all feed matches
+                        // 2 (strict): block all matches including parent-domain (0.8)
+                        let dominated_by_level = match self.protection_level {
+                            0 => {
+                                // Relaxed: only block exact matches for dangerous types
+                                threat.confidence >= 1.0
+                                    && matches!(
+                                        threat.threat_type,
+                                        ThreatType::Phishing
+                                            | ThreatType::Malware
+                                            | ThreatType::Command
+                                    )
+                            }
+                            2 => true, // Strict: block everything
+                            _ => threat.confidence >= 1.0, // Balanced: block exact matches
+                        };
+
+                        if dominated_by_level {
+                            should_block = true;
+                        }
+
+                        // Always log the alert regardless of level
                         if self.alerted_domains.len() >= 10_000 {
                             self.alerted_domains.clear();
                         }

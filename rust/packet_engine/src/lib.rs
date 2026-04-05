@@ -257,6 +257,28 @@ pub unsafe extern "C" fn packet_engine_set_ech_downgrade(
     }
 }
 
+/// Set the protection level: 0 = relaxed, 1 = balanced, 2 = strict.
+#[no_mangle]
+pub unsafe extern "C" fn packet_engine_set_protection_level(
+    engine: *mut PacketEngine,
+    level: u8,
+) -> c_int {
+    if engine.is_null() {
+        return -1;
+    }
+
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let engine = &mut *engine;
+        engine.protection_level = level.min(2);
+        0
+    }));
+
+    match result {
+        Ok(code) => code,
+        Err(_) => -1,
+    }
+}
+
 // ═══════════════════════════════════════════════════════════
 // Diagnostics
 // ═══════════════════════════════════════════════════════════
