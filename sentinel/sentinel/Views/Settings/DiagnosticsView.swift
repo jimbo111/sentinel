@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct DiagnosticsView: View {
     // MARK: - System section state
