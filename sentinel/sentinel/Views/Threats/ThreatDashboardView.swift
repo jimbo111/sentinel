@@ -1,4 +1,5 @@
 import SwiftUI
+import NetworkExtension
 
 /// Main security dashboard — combines VPN control + threat intelligence.
 struct ThreatDashboardView: View {
