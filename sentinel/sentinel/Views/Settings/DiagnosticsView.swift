@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import NetworkExtension
 
 struct DiagnosticsView: View {
     // MARK: - System section state
