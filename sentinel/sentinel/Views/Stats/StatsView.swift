@@ -493,57 +493,6 @@ struct StatsView: View {
         .clipShape(Capsule())
     }
 
-// MARK: - Diagonal Stripes
-
-struct DiagonalStripes: View {
-    let color: Color
-
-    var body: some View {
-        Canvas { context, size in
-            let w: CGFloat = 4
-            let step: CGFloat = 10
-            for x in stride(from: -size.height, through: size.width + size.height, by: step) {
-                var path = Path()
-                path.move(to: CGPoint(x: x, y: size.height))
-                path.addLine(to: CGPoint(x: x + size.height, y: 0))
-                context.stroke(path, with: .color(color), lineWidth: w)
-            }
-        }
-        .clipped()
-        .opacity(0.3)
-    }
-}
-
-}
-
-// MARK: - Supporting Views
-
-struct SummaryCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-                .frame(width: 40, height: 40)
-                .background(color.opacity(0.1))
-                .cornerRadius(12)
-
-            Text(value)
-                .font(.system(.title2, design: .rounded).bold())
-
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .cardStyle()
-    }
 }
 
 #Preview {
