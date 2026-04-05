@@ -132,6 +132,7 @@ final class VPNManager: ObservableObject {
     // MARK: - Connection control
 
     /// Starts the VPN tunnel, creating a configuration if one does not yet exist.
+    /// Re-enables on-demand so iOS keeps the tunnel alive across sleep/network changes.
     func connect() async throws {
         isLoading = true
         defer { isLoading = false }
@@ -148,13 +149,11 @@ final class VPNManager: ObservableObject {
             throw VPNManagerError.noConfiguration
         }
 
-        // Always ensure the profile is enabled and saved before connecting.
-        // A loaded profile may have isEnabled=false (user disabled in iOS
-        // Settings, or profile was never saved with isEnabled=true).
-        // startVPNTunnel on a disabled profile returns NEVPNError.configurationDisabled.
-        if !manager.isEnabled {
-            os_log("connect: profile disabled, re-enabling...", log: log, type: .info)
+        // Re-enable on-demand so the tunnel stays alive.
+        if !manager.isEnabled || !manager.isOnDemandEnabled {
+            os_log("connect: enabling profile + on-demand...", log: log, type: .info)
             manager.isEnabled = true
+            manager.isOnDemandEnabled = true
             try await manager.saveToPreferences()
             try await manager.loadFromPreferences()
         }
@@ -168,9 +167,19 @@ final class VPNManager: ObservableObject {
         }
     }
 
-    /// Stops the VPN tunnel.
+    /// Stops the VPN tunnel and disables on-demand so iOS does not
+    /// automatically reconnect after the user explicitly disconnects.
     func disconnect() {
-        manager?.connection.stopVPNTunnel()
+        guard let manager = manager else { return }
+        os_log("disconnect: disabling on-demand to prevent auto-reconnect", log: log, type: .info)
+        manager.isOnDemandEnabled = false
+        manager.saveToPreferences { [weak self] error in
+            if let error {
+                os_log("disconnect: failed to save on-demand change: %{public}@",
+                       log: self?.log ?? .default, type: .error, error.localizedDescription)
+            }
+            manager.connection.stopVPNTunnel()
+        }
     }
 
     /// Connects if currently disconnected, disconnects if currently connected.
