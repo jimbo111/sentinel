@@ -11,8 +11,12 @@ sentinel/PacketTunnelExtension/Bridge/packet_engine.h
 
 # Xcode
 *.xcuserdata
+*.xcuserdatad
 DerivedData/
 *.xcuserstate
+
+# Test results (may contain DNS/IP data)
+tests/results/
 
 # macOS
 .DS_Store
